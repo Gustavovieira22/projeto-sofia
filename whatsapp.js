@@ -4,6 +4,9 @@ const path = require('path');
 const fs = require('fs');
 const { exit } = require('process');
 
+//funções locais
+const gpt = require('./gpt/gpt');
+
 //configuração da API wweb.js//
 const client = new Client({
     webVersionCache: {
@@ -45,7 +48,7 @@ client.on('auth_failure', msg => {
 });
 
 client.on('ready', () => {
-    console.log('Henry Bot Online!');
+    console.log('Chatbot Sofia está online!');
 });
 
 client.on('message_create',async(message) =>{
@@ -56,9 +59,14 @@ client.on('message_create',async(message) =>{
     const messageBody = message.body; // corpo da mensagem
     const number = message.from; // telefone do cliente no formato API
 
-    //ignorar as mensagems proprias, de grupos e status
-    if(message.fromMe || chat.isGroup || message.isStatus){
-        console.log('Ignorando mensagem de grupo | status | próprias');
+    //ignorando as próprias mensagens
+    if(message.fromMe){
+        return;
+    }
+
+    //ignorar as mensagems de grupos e status
+    if(chat.isGroup || message.isStatus){
+        console.log('Ignorando mensagem de grupo | status');
         return;
     }
 
@@ -67,10 +75,10 @@ client.on('message_create',async(message) =>{
        console.log(`Localização Recebida: https://maps.google.com/?q=${chat.lastMessage.location.latitude},${chat.lastMessage.location.longitude}`);
     }
 
-    //solicitar esclarecimento quando cliente enviar um áudio
+    //solicitar esclarecimento quando cliente enviar imagem
     if(message.hasMedia && typeChat == 'image'){
         //cliente envia uma imagem
-        await client.sendMessage(number, `😔 Desculpe, ainda não consigo ler imagens. Você pode escrever em texto ou me enviar um áudio descrevendo o que está na imagem, por favor?`);
+        await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\nDesculpe, ainda *não consigo ler imagens*. Você pode *escrever em texto*✏️ ou me *enviar um áudio*🔊 descrevendo o que está na imagem, por favor?😔`);
         return;
     }
 
@@ -83,17 +91,18 @@ client.on('message_create',async(message) =>{
     if (typeChat !== 'chat') {
         return;
     }
-
-    console.log(`Received:`,messageBody);
-    //const location = new Location(-16.6491009,-49.1798874);
     
-    //envia mensagem para o cliente
-    //await client.sendMessage(number, location);
+    //simula o "digitando..." enquanto aguarda a resposta do chatbot
+    await chat.sendStateTyping();
 
-});
+    setTimeout(async()=>{
+        //aguarda a reposta do chatbot
+        const response_gpt = await gpt(messageBody);
 
-// Listener para o evento de digitação, específico por cliente
-client.on('typing', async (chat) => {
-
+        //envia mensagem para o cliente
+        await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
+        return;
+    },1000)
+    //const location = new Location(-16.6491009,-49.1798874);
 });
 
