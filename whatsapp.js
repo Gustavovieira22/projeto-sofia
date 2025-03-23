@@ -5,7 +5,7 @@ const fs = require('fs');
 const { exit } = require('process');
 
 //funções locais
-const gpt = require('./gpt/gpt');
+const {gpt, response_human} = require('./gpt/gpt');
 
 //configuração da API wweb.js//
 const client = new Client({
@@ -61,6 +61,7 @@ client.on('message_create',async(message) =>{
 
     //ignorando as próprias mensagens
     if(message.fromMe){
+        response_human(messageBody);
         return;
     }
 
