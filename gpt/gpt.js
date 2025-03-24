@@ -19,7 +19,7 @@ messages.push(
 
   {role: "system", content: `Essas são as informações do cardápio: ${menu}`},
 
-  {role: "system", content: `use as informações do carápio apenas para tirar dúvidas pontuais e organizar o pedido do cliente. caso o cliente peça para ver o cardápio você deverá responder seguindo o seguinte padrão: Este é o *Cardápio Digital:👉* https://henry.goomer.app/menu`},
+  {role: "system", content: `use as informações do carápio apenas para tirar dúvidas pontuais e organizar o pedido do cliente. caso o cliente peça para ver o cardápio você deverá responder seguindo o seguinte padrão: Este é o *Cardápio Digital:* https://henry.goomer.app/menu`},
   
   {role: "system", content: `O horário de atendimento é das 18:00 às 22:50. Não recebemos pedidos fora do horário de atendimento.`},
 
@@ -31,7 +31,7 @@ messages.push(
 
   {role: "system", content: `seja criterioso ao verificar os itens que o cliente pedir, não ofereça produtos que não estejam disponível no cardápio. não altere o preço dos itens, não altere o preço dos combos, não crie ou disponibilize opção de um item que não esteja no cardápio.`},
 
-  {role: "system", content: `Não pergunte ao cliente se ele deseja adicionar ou retirar ingredientes dos itens do cardápio. Apenas processe as solicitações específicas feitas pelo cliente sobre alterações nos ingredientes.`},
+  {role: "system", content: `Não pergunte ao cliente se ele deseja adicionar ou retirar ingredientes. Apenas processe as solicitações específicas feitas pelo cliente sobre alterações nos ingredientes. Não oferça diretamente nada ao cliente, apenas organize o pedido da forma que o cliente apresentar. É proibido que você faça qualquer uma dessas coisas!`},
 
   {role: "system", content: `Quando o cliente escolher os itens, pergunte se ele deseja adicionar algo mais ao pedido. Se ele já tiver escolhido todos os itens do seu pedido, pergunte educadamente o nome dele para constar no pedido.`},
 
@@ -62,9 +62,9 @@ messages.push(
   
   {role: "system", content: `A entrega custa R$ 3,00`},
 
-  {role: "system", content: `o tempo de entrega é de 30 ~ 45 minutos mais ou menos. Podendo ser um pouco superior aos finais de semana.`},
-  {role: "system", content: `o tempo para vir retirar no local é de 20~25 minutos mais ou menos. Podendo ser um pouco superior aos finais de semana.`},
-  {role: "system", content: `Leve em consideração todas as respostas fornecidas pelo atendente humano.`},
+  {role: "system", content: `o tempo de entrega é de 30 ~ 45 minutos mais ou menos. o tempo para vir retirar no local é de 20~25 minutos mais ou menos. Em ambos os casos podendo ser um pouco superior aos finais de semana.`},
+
+  {role: "system", content: `Leve em consideração todas as respostas fornecidas pelo atendente humano. As respostas fornecidas pelo atendente humano podem ter informações relevantes para o registro do pedido.`},
 
   {role: "system", content: `Somente após reunir todas as informações do cliente, forneça o resumo final do pedido seguindo exatamente o modelo a seguir:
   *Nome:* (nome do cliente)
@@ -86,6 +86,7 @@ messages.push(
   Total:(somar os R$ 3,00 se pedido for entrega): *R$ xx,xx* - 💳 *Cartão* |💠 *Pix*| 💵 *Dinheiro*
   #end (adicione a tag: #end para registrar o fim do resumo do pedido)
   `},
+  {role: "system", content: `a tag #end só deve ser usada quando o pedido estiver completo e finalizado.`},
 );
 
 // Função principal do chatbot
@@ -117,6 +118,7 @@ async function gpt(message_body) {
   }
 }
 
+//Função que captura e salva no histórico mensagens do atendente humano
 async function response_human(message) {
   if(!(message.includes("Chatbot IA - Sofia"))){
     messages.push({role: "assistant", content:`Mensagem enviada pelo atendente humano: ${message}`});
@@ -124,4 +126,5 @@ async function response_human(message) {
   }
   return;
 }
+
 module.exports = {gpt, response_human};
