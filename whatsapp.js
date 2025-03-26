@@ -4,16 +4,16 @@ const path = require('path');
 const fs = require('fs');
 const { exit } = require('process');
 
-//funções locais
-const {gpt, response_human} = require('./gpt/gpt');
-const whisper = require('./gpt/whisper');
+//Funções Locais//
+const {gpt, response_human} = require('./gpt/gpt'); //Chamada para API gpt - Salva respostas do atendente humano no histórico//
+const whisper = require('./gpt/whisper');//converte áudio em texto//
 
-//variaveis de controle
+//variaveis de controle//
 let typingTimeouts = new Map(); //controla o timer de respostas para os clientes.
 let messageComplet = new Map(); //junta mensagens quebradas
 const botStart_time = Date.now();//hora da inicialização do chatbot
 
-//configuração da API wweb.js
+//configuração da API wweb.js//
 const client = new Client({
     webVersionCache: {
         type: "remote",
@@ -44,6 +44,7 @@ client.on('loading_screen', (percent, message) => {
     console.log('LOADING SCREEN', percent, message);
 });
 
+//exibe qr code no terminal//
 client.on('qr', (qr) => {
     qrcode.generate(qr, { small: true });
     console.log('QR code gerado, escaneie com o WhatsApp');
@@ -51,11 +52,12 @@ client.on('qr', (qr) => {
 
 //retorna erro caso tenha alguma falha na autenticação
 client.on('auth_failure', msg => {
-    console.error('AUTHENTICATION FAILURE', msg);
+    console.error('Falha na autenticação!', msg);
 });
 
+//api está pronto para receber mensagens//
 client.on('ready', () => {
-    console.log('Chatbot Sofia está online!');
+    console.log('Chatbot Online!');
 });
 
 //Listener para envento "receber mensagem". (ouve todas as mensagens recebidas)
@@ -67,26 +69,25 @@ client.on('message_create',async(message) =>{
     const messageBody = message.body; // corpo da mensagem (texto)
     const number = message.from; // telefone do cliente no formato API
 
-    //ignora mensagens enviadas antes da inicialização do chatbot
+    //ignora mensagens enviadas antes da inicialização do chatbot//
     if (message_time < botStart_time) {
         console.log("Ignorando mensagens antigas.");
         return;
     }
     
-    //ignorar as mensagems de grupos e status
+    //ignorar as mensagems de grupos e status//
     if(chat.isGroup || message.isStatus){
         console.log('Ignorando mensagem de grupo | status');
         return;
     }
 
-    //Criando estrutura para salvar juntar mensagens quebradas.
+    //Criando estrutura para juntar mensagens quebradas//
     if (!messageComplet.has(phone)) {
         messageComplet.set(phone, []);
     }
-    
-    //ignorando as próprias mensagens
+
+    //Salva no histórico mensagens enviadas pelo atendimento humano//
     if(message.fromMe){
-        //Salva no histórico mensagens enviadas pelo atendimento humano
         response_human(messageBody);
         return;
     }
@@ -98,9 +99,10 @@ client.on('message_create',async(message) =>{
 
     //solicitar esclarecimento quando cliente enviar imagem
     if(message.hasMedia && typeChat == 'image'){
-        //simula o "digitando..." enquanto aguarda a resposta do chatbot
+        //simula o "digitando..." enquanto aguarda a resposta do chatbot//
         await chat.sendStateTyping();
 
+        //Aguarda 2 segundos antes de enviar mensagem para o cliente//
         setTimeout(async () => {
             await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\nDesculpe, ainda *não consigo ler imagens*. Você pode *escrever em texto*✏️ ou me *enviar um áudio*🔊 descrevendo o que está na imagem, por favor?😔`);
         }, 2000);
@@ -108,12 +110,12 @@ client.on('message_create',async(message) =>{
     }
 
 //---------------------------------------------ÁUDIO---------------------------------------------------//
-    //salvar e interpretar o áudio enviado pelo cliente
+    //salvar e interpretar o áudio enviado pelo cliente//
     if(message.hasMedia && typeChat == 'ptt'){
         const media = await message.downloadMedia();
         const audioDir = path.join(__dirname, 'audios');
 
-        // Cria o diretório se ele não existir
+        // Cria o diretório se ele não existir//
         if (!fs.existsSync(audioDir)) {
             fs.mkdirSync(audioDir, { recursive: true });
         }
@@ -123,17 +125,19 @@ client.on('message_create',async(message) =>{
             fs.writeFileSync(audioPath,media.data,'base64');
             console.log(`Audio salvo em: ${audioPath}`);
 
-            //função que converte aúdio em texto
+            //função que converte aúdio em texto//
             const textoAudio = await whisper(audioPath);
 
-            //simula o "digitando..." enquanto aguarda a resposta do chatbot
+            //simula o "digitando..." enquanto carrega resposta do chatbot
             await chat.sendStateTyping();
 
             //envia o texto convertido para o gpt
             const response_gpt = await gpt(textoAudio);
 
-            // Envia a resposta ao cliente
-            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
+            //Aguarda 2 segundos antes de enviar mensagem para o cliente//
+            setTimeout(async () => {
+                await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
+            }, 2000);
             return;
         }
     }
@@ -144,41 +148,41 @@ client.on('message_create',async(message) =>{
         return;
     }
     
-    // Adiciona a mensagem no buffer
+    // Adiciona a mensagem no buffer de mensagens quebradas//
     messageComplet.get(phone).push(messageBody);
 
-    // Verifica se já existe um timeout para o cliente e limpa caso exista
+    // Verifica se já existe um timeout para o cliente e limpa caso exista//
     if (typingTimeouts.has(phone)) {
         clearTimeout(typingTimeouts.get(phone));
     }
 
-    // Adiciona ou reinicia o timeout para o cliente específico
+    // Adiciona ou reinicia o timeout para o cliente específico//
     typingTimeouts.set(phone, setTimeout(async () => {
-        const allMessages = messageComplet.get(phone).join(' ');
+        const allMessages = messageComplet.get(phone).join(' ');//juntando todas as mensagens quebradas//
 
         //simula o "digitando..." enquanto aguarda a resposta do chatbot
         await chat.sendStateTyping();
 
-        // Envia todas as mensagens para o GPT
+        // Envia uma única mensagem para o gpt//
         const response_gpt = await gpt(allMessages);
 
         // Envia a resposta ao cliente
         await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
 
-        // Após o envio, limpa o buffer de mensagens e o timeout
+        // Após o envio, limpa o buffer de mensagens e o timeout//
         messageComplet.delete(phone);
         typingTimeouts.delete(phone);
 
-    }, 5000)); // Espera 5 segundos para processar mensagens quando o cliente para de digitar
+    }, 5000)); // Espera 5 segundos para processar mensagens quando o cliente para de digitar//
     
     //const location = new Location(-16.6492995,-49.1799726);
 });
 
-// Listener (ouvinte) para o evento de digitação, específico por cliente
+// Listener (ouvinte) para o evento de digitação//
+/*Faz o chatbot aguardar 5 segundos sempre que o cliente começa a digitar*/
 client.on('typing', async (chat) => {
     const phone = chat.id.user;
-
-    // Se o cliente está digitando, limpa o timer para que ele conclua o texto
+    // Se o cliente está digitando, limpa o timer para que ele conclua o texto//
     if (typingTimeouts.has(phone)) {
          clearTimeout(typingTimeouts.get(phone));
     }

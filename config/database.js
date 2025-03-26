@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-//Estabelece a conexão com o banco de dados;
+//Arquivo de conexão com o banco de dados//
 
 const connectDB = async()=>{
     try {
