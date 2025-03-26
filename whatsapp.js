@@ -11,6 +11,7 @@ const whisper = require('./gpt/whisper');
 //variaveis de controle
 let typingTimeouts = new Map(); //controla o timer de respostas para os clientes.
 let messageComplet = new Map(); //junta mensagens quebradas
+const botStart_time = Date.now();//hora da inicialização do chatbot
 
 //configuração da API wweb.js
 const client = new Client({
@@ -59,11 +60,24 @@ client.on('ready', () => {
 
 //Listener para envento "receber mensagem". (ouve todas as mensagens recebidas)
 client.on('message_create',async(message) =>{ 
+    const message_time = message.timestamp * 1000; //captura a hora que a mensagem foi enviada.
     const chat = await message.getChat(); //captura todos os dados do chat iniciado
     const typeChat = message.type; // tipo de mensagem recebida
     const phone = chat.id.user; // telefone do cliente
     const messageBody = message.body; // corpo da mensagem (texto)
     const number = message.from; // telefone do cliente no formato API
+
+    //ignora mensagens enviadas antes da inicialização do chatbot
+    if (message_time < botStart_time) {
+        console.log("Ignorando mensagens antigas.");
+        return;
+    }
+    
+    //ignorar as mensagems de grupos e status
+    if(chat.isGroup || message.isStatus){
+        console.log('Ignorando mensagem de grupo | status');
+        return;
+    }
 
     //Criando estrutura para salvar juntar mensagens quebradas.
     if (!messageComplet.has(phone)) {
@@ -74,12 +88,6 @@ client.on('message_create',async(message) =>{
     if(message.fromMe){
         //Salva no histórico mensagens enviadas pelo atendimento humano
         response_human(messageBody);
-        return;
-    }
-
-    //ignorar as mensagems de grupos e status
-    if(chat.isGroup || message.isStatus){
-        console.log('Ignorando mensagem de grupo | status');
         return;
     }
 
@@ -162,8 +170,8 @@ client.on('message_create',async(message) =>{
         typingTimeouts.delete(phone);
 
     }, 5000)); // Espera 5 segundos para processar mensagens quando o cliente para de digitar
-
-    //const location = new Location(-16.6491009,-49.1798874);
+    
+    //const location = new Location(-16.6492995,-49.1799726);
 });
 
 // Listener (ouvinte) para o evento de digitação, específico por cliente

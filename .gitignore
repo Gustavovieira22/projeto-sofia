@@ -3,3 +3,5 @@ node_modules
 .env
 restaurant.json
 audios
+sync.js
+insertData.js
