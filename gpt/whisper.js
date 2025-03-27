@@ -26,7 +26,7 @@ async function whisper(filePath) {
         return response.data.text; // Retorna o texto transcrito
     } catch (error) {
         console.error('Erro ao transcrever o áudio:', error.response ? error.response.data : error.message);
-        return '*Henry Bot* apresentou erro ao processar sua mensagem! Por favor, envie a mesma mensagem novamente.';
+        return 'Erro ao processar sua mensagem!';
     }
 }
 

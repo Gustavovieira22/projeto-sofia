@@ -8,10 +8,10 @@ O que Sofia faz?
 - tira eventuais duvidas dos clientes
 - organiza a estrutura basica do pedido
 - explica sobre itens do cardápio e fornece preços
+- envia localização, cardápio digital e cardápio em pdf para o cliente
 
 Próximas atualizações:
 - salvar dados do cliente (nome, endereço, telefone e informações/ preferências dos clientes)
-- refinar o entendimento de contexto para envio de informações da loja (enviar cardápio, localização, PDF com imagens)
 - interface gráfica para alteração de prompts/ regras de atendimento do gpt
 - ativar e desativar chatbot em uma conversa 
 

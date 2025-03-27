@@ -1,17 +1,25 @@
-const { Client, LocalAuth, Location} = require('whatsapp-web.js');
+const { Client, LocalAuth, Location, MessageMedia} = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const path = require('path');
 const fs = require('fs');
 const { exit } = require('process');
 
-//Funções Locais//
+//Funções de chamada para modelos de IA//
 const {gpt, response_human} = require('./gpt/gpt'); //Chamada para API gpt - Salva respostas do atendente humano no histórico//
 const whisper = require('./gpt/whisper');//converte áudio em texto//
+
+//importando funções de lógica do processamento de mensagens//
+const tagProcess = require('./services/tagProcess');
 
 //variaveis de controle//
 let typingTimeouts = new Map(); //controla o timer de respostas para os clientes.
 let messageComplet = new Map(); //junta mensagens quebradas
 const botStart_time = Date.now();//hora da inicialização do chatbot
+
+//importa cardápio em formato PDF//
+const pdfPath = `./cardapio_pdf/cardapio_2025_01.pdf`;
+const mediaPdf = MessageMedia.fromFilePath(pdfPath);
+
 
 //configuração da API wweb.js//
 const client = new Client({
@@ -134,15 +142,34 @@ client.on('message_create',async(message) =>{
             //envia o texto convertido para o gpt
             const response_gpt = await gpt(textoAudio);
 
-            //Aguarda 2 segundos antes de enviar mensagem para o cliente//
-            setTimeout(async () => {
-                await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
-            }, 2000);
-            return;
+            //Função que verifica tag de substituição//
+            const processMessage = await tagProcess(response_gpt);
+
+            //caso tenha substituição de tags//
+            if(processMessage.processMessage){
+                //Aguarda 2 segundos antes de enviar mensagem para o cliente//
+                setTimeout(async () => {
+                    await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${processMessage.processMessage}`);                
+                    if(processMessage.location){//verifica se a localização foi solicitada//
+                        const location = new Location(-16.6492995,-49.1799726);//gera localização da loja//
+                        await client.sendMessage(number, location, "Henry Burguer - Goiânia, GO");//envia localização para o cliente//
+
+                    }else if(processMessage.pdf){
+                        await client.sendMessage(number, mediaPdf);//envia cardápio em pdf para cliente//
+                    }
+                }, 2000);
+                return;   
+            }else{
+                //Aguarda 2 segundos antes de enviar mensagem para o cliente//
+                setTimeout(async () => {
+                    await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
+                }, 2000);
+                return;   
+            }
         }
     }
-//---------------------------------------------ÁUDIO---------------------------------------------------//
 
+//---------------------------------------------ÁUDIO---------------------------------------------------//
     //ignorar qualquer mensagem que não seja do tipo chat = texto
     if(typeChat !== 'chat') {
         return;
@@ -166,20 +193,32 @@ client.on('message_create',async(message) =>{
         // Envia uma única mensagem para o gpt//
         const response_gpt = await gpt(allMessages);
 
-        // Envia a resposta ao cliente
-        await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
+        //Função que verifica tag de substituição//
+        const processMessage = await tagProcess(response_gpt);
+
+        if(processMessage.processMessage){
+            // Envia mensagem com correção de tag para o cliente//
+            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${processMessage.processMessage}`);
+            if(processMessage.location){
+                const location = new Location(-16.6492995,-49.1799726);//gera localização da loja//
+                await client.sendMessage(number, location, "Henry Burguer - Goiânia, GO");//envia localização para o cliente//
+
+            }else if(processMessage.pdf){
+                await client.sendMessage(number, mediaPdf);//envia cardápio em pdf para cliente//
+            }
+        }else{
+            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
+        }
 
         // Após o envio, limpa o buffer de mensagens e o timeout//
         messageComplet.delete(phone);
         typingTimeouts.delete(phone);
 
-    }, 5000)); // Espera 5 segundos para processar mensagens quando o cliente para de digitar//
-    
-    //const location = new Location(-16.6492995,-49.1799726);
+    }, 4000)); // Espera 4 segundos para processar mensagens quando o cliente para de digitar//
 });
 
 // Listener (ouvinte) para o evento de digitação//
-/*Faz o chatbot aguardar 5 segundos sempre que o cliente começa a digitar*/
+/*Faz o chatbot aguardar 4 segundos sempre que o cliente começa a digitar*/
 client.on('typing', async (chat) => {
     const phone = chat.id.user;
     // Se o cliente está digitando, limpa o timer para que ele conclua o texto//

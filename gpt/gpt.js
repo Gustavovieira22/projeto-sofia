@@ -20,8 +20,6 @@ const messages = [];
 
 // Função de chamada chatbot//
 async function gpt(message_body) {
-  messages.push(...rulesCache);//grava regras de atendimento nos parametros do chatbot//
-  messages.push(...menuCache);//grava o conteúdo do cardápio nos parametros do chatbot//
   messages.push({role: "user", content:message_body}); //grava a mensagem do cliente no histórico//
 
   try{
@@ -35,10 +33,14 @@ async function gpt(message_body) {
         // model: "o3-mini",
         // reasoning_effort: "low"
     });
+    const responseGpt = completion.choices[0].message.content; //salva a resposta do GPT//
+    messages.push({role: "assistant", content:responseGpt}); //grava a resosta do chatbot no histórico//
     
-    messages.push({role: "assistant", content:completion.choices[0].message.content}); //grava a resosta do chatbot no histórico
-    return completion.choices[0].message.content;
-    
+    console.log(messages);
+    console.log('\n--------------------------------------------------------------------------\n');
+
+    return responseGpt; //retornar a mensagem gerada pelo GPT//
+
   } catch (error) {
     console.error("Erro ao acessar a API:", error.response?.data || error.message);
     return `Erro ao processar resposta!`;
@@ -59,6 +61,8 @@ async function response_human(message) {
 async function gptParams() {
   await connectDB(); // Aguarda a conexão com o banco de dados//
   await initData();  // recupera os dados do banco e guarda em cache local//
+  messages.push(...rulesCache);//grava regras de atendimento nos parametros do chatbot//
+  messages.push(...menuCache);//grava o conteúdo do cardápio nos parametros do chatbot//
 }
 
 module.exports = {gpt, response_human};
