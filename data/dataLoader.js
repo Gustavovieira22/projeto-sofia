@@ -1,9 +1,11 @@
 //importando models de banco de dados//
 const Menu = require('../models/Menu'); //cardápio do restaurante//
 const Rules_gpt = require('../models/Rule_gpt'); //Regras de atendimento//
+const Delivery_locations = require('../models/Delivery_locations');//
 
 let rulesCache = [];//regas//
 let menuCache = [];//cardápio//
+let deliveryCahe = [];//bairros de entrega//
 
 //Função que carrega dados do banco de dados para variavel local//
 async function loadData() {
@@ -11,8 +13,14 @@ async function loadData() {
         const rules = await Rules_gpt.find().sort({ _id: 1 });//recupera dados do banco de dados em ordem//
         rulesCache.push(...rules.map(rule =>({
             role:rule.role,
-            content: rule.content
+            content:rule.content
         })));//formata os dados para a estrutura aceita pela API do chat GPT//
+
+        const delivery = await Delivery_locations.find().sort({ _id: 1 });//recupera dados do banco de dados em ordem//
+        deliveryCahe.push(...delivery.map(delivery =>({
+            role:delivery.role,
+            content:delivery.content
+        })));
 
         const menu = await Menu.find().sort({ _id: 1 });//recupera dados do banco de dados em ordem//
         menuCache.push(...menu.map(menu => ({
@@ -37,4 +45,4 @@ async function initData() {
     await loadData();
 }
 
-module.exports = { rulesCache, menuCache, initData };
+module.exports = { rulesCache, menuCache, deliveryCahe, initData };

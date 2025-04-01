@@ -1,3 +1,4 @@
+//Importado módulos do npm//
 const { Client, LocalAuth, Location, MessageMedia} = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const path = require('path');
@@ -5,21 +6,20 @@ const fs = require('fs');
 const { exit } = require('process');
 
 //Funções de chamada para modelos de IA//
-const {gpt, response_human} = require('./gpt/gpt'); //Chamada para API gpt - Salva respostas do atendente humano no histórico//
+const gpt = require('./gpt/gpt'); //Chamada para API gpt - Salva respostas do atendente humano no histórico//
 const whisper = require('./gpt/whisper');//converte áudio em texto//
 
-//importando funções de lógica do processamento de mensagens//
+//importando funções de lógica de processamento//
 const tagProcess = require('./services/tagProcess');
+const {saveClient, saveLocation} = require('./services/clienteService');
 
 //variaveis de controle//
-let typingTimeouts = new Map(); //controla o timer de respostas para os clientes.
-let messageComplet = new Map(); //junta mensagens quebradas
-const botStart_time = Date.now();//hora da inicialização do chatbot
+const botStart_time = Date.now();//hora da inicialização do chatbot//
+const {controlClient, messages} = require('./utils/controlClient'); //controle de status de atendimento // Histórico de mensagens do cliente//
 
 //importa cardápio em formato PDF//
 const pdfPath = `./cardapio_pdf/cardapio_2025_01.pdf`;
 const mediaPdf = MessageMedia.fromFilePath(pdfPath);
-
 
 //configuração da API wweb.js//
 const client = new Client({
@@ -49,7 +49,7 @@ client.initialize();
 
 //apresenta o percentual de mensagens carregadas
 client.on('loading_screen', (percent, message) => {
-    console.log('LOADING SCREEN', percent, message);
+    console.log('Carregando Mensagens:',`${percent}%`, message);
 });
 
 //exibe qr code no terminal//
@@ -68,20 +68,16 @@ client.on('ready', () => {
     console.log('Chatbot Online!');
 });
 
+
+
 //Listener para envento "receber mensagem". (ouve todas as mensagens recebidas)
 client.on('message_create',async(message) =>{ 
-    const message_time = message.timestamp * 1000; //captura a hora que a mensagem foi enviada.
+    const message_time = message.timestamp * 1000; //captura a hora que a mensagem foi enviada//
     const chat = await message.getChat(); //captura todos os dados do chat iniciado
     const typeChat = message.type; // tipo de mensagem recebida
     const phone = chat.id.user; // telefone do cliente
     const messageBody = message.body; // corpo da mensagem (texto)
     const number = message.from; // telefone do cliente no formato API
-
-    //ignora mensagens enviadas antes da inicialização do chatbot//
-    if (message_time < botStart_time) {
-        console.log("Ignorando mensagens antigas.");
-        return;
-    }
     
     //ignorar as mensagems de grupos e status//
     if(chat.isGroup || message.isStatus){
@@ -89,32 +85,68 @@ client.on('message_create',async(message) =>{
         return;
     }
 
-    //Criando estrutura para juntar mensagens quebradas//
-    if (!messageComplet.has(phone)) {
-        messageComplet.set(phone, []);
+    //verifica se é o primeiro contato do cliente//
+    if(!controlClient.has(phone)){
+        await saveClient(phone);//Verifica se cliente está registrado no banco de dados//
+        controlClient.set(phone, true);//salva cliente no cache status de atendimento//
+
+        //Primeira mensagem de saudação//
+        if(typeChat === 'chat'){
+            await chat.sendStateTyping(); //simula o "digitando..."//
+            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n⭐⭐⭐⭐⭐\nSeja bem-vindo(a) ao *Henry Burguer!*\nhttps://henryburguer.com.br/`);
+        }
+
+    }
+    
+    if(typeChat === 'location'){//salvar a localização do cliente na base de dados
+        if(!message.fromMe){
+            await saveLocation(chat.lastMessage.location.latitude, chat.lastMessage.location.longitude, phone);
+            messages.get(phone).push({role: "system", content:`A localização para o endereço do cliente é: https://maps.google.com/?q=${chat.lastMessage.location.latitude},${chat.lastMessage.location.longitude}`});
+            return;
+        }
+
+    }
+
+    if(!(controlClient.get(phone))){
+        console.log(`chatbot desativado para o cliente: ${phone}`);
+        return;
+    }
+
+    if(messageBody.length>250 && !message.fromMe){//Ignora mensagens muito longas, desativa atendimento de chatbot//
+        console.log(`Mensagem muito longa, desativando chatbot para: ${phone}`);
+        controlClient.set(phone, false);
+        return;
+    }
+
+    //ignora mensagens enviadas antes da inicialização do chatbot//
+    if (message_time < botStart_time) {
+        console.log("Ignorando mensagens antigas.");
+        return;
     }
 
     //Salva no histórico mensagens enviadas pelo atendimento humano//
     if(message.fromMe){
-        response_human(messageBody);
+        if(messages.has(phone)){//desativa o chatbot para o contato que receber essa mensagem//
+            if(messageBody.includes("desativar")){
+              controlClient.set(phone,false);
+              return;
+            }else if(!(messageBody.includes("Chatbot IA - Sofia")) && typeChat === 'chat' && messageBody != ""){//captura as mensagens enviadas pelo atendimento humano//
+              messages.get(phone).push({role: "assistant", content:`Mensagem enviada pelo atendente humano: ${messageBody}`});
+              return;
+            }
+          }
         return;
-    }
-
-    //salvar a localização do cliente na base de dados
-    if(typeChat === 'location'){
-       console.log(`Localização Recebida: https://maps.google.com/?q=${chat.lastMessage.location.latitude},${chat.lastMessage.location.longitude}`);
     }
 
     //solicitar esclarecimento quando cliente enviar imagem
     if(message.hasMedia && typeChat == 'image'){
-        //simula o "digitando..." enquanto aguarda a resposta do chatbot//
-        await chat.sendStateTyping();
+        await chat.sendStateTyping(); //simula o "digitando..."//
 
         //Aguarda 2 segundos antes de enviar mensagem para o cliente//
         setTimeout(async () => {
             await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\nDesculpe, ainda *não consigo ler imagens*. Você pode *escrever em texto*✏️ ou me *enviar um áudio*🔊 descrevendo o que está na imagem, por favor?😔`);
         }, 2000);
-        return;
+        return; 
     }
 
 //---------------------------------------------ÁUDIO---------------------------------------------------//
@@ -136,30 +168,32 @@ client.on('message_create',async(message) =>{
             //função que converte aúdio em texto//
             const textoAudio = await whisper(audioPath);
 
-            //simula o "digitando..." enquanto carrega resposta do chatbot
-            await chat.sendStateTyping();
-
             //envia o texto convertido para o gpt
-            const response_gpt = await gpt(textoAudio);
+            const response_gpt = await gpt(textoAudio, phone);
 
             //Função que verifica tag de substituição//
-            const processMessage = await tagProcess(response_gpt);
+            const processMessage = await tagProcess(response_gpt,phone);
 
             //caso tenha substituição de tags//
             if(processMessage.processMessage){
+                await chat.sendStateTyping();//simula o "digitando..."//
+                
                 //Aguarda 2 segundos antes de enviar mensagem para o cliente//
                 setTimeout(async () => {
                     await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${processMessage.processMessage}`);                
+                    
                     if(processMessage.location){//verifica se a localização foi solicitada//
                         const location = new Location(-16.6492995,-49.1799726);//gera localização da loja//
                         await client.sendMessage(number, location, "Henry Burguer - Goiânia, GO");//envia localização para o cliente//
 
-                    }else if(processMessage.pdf){
+                    }else if(processMessage.pdf){//verifica se o cardapio em PDF foi solicitado//
                         await client.sendMessage(number, mediaPdf);//envia cardápio em pdf para cliente//
                     }
                 }, 2000);
                 return;   
             }else{
+                await chat.sendStateTyping();//simula o "digitando..."//
+
                 //Aguarda 2 segundos antes de enviar mensagem para o cliente//
                 setTimeout(async () => {
                     await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
@@ -168,61 +202,36 @@ client.on('message_create',async(message) =>{
             }
         }
     }
-
 //---------------------------------------------ÁUDIO---------------------------------------------------//
-    //ignorar qualquer mensagem que não seja do tipo chat = texto
+
+    //ignorar qualquer mensagem que não seja do tipo chat = texto//
     if(typeChat !== 'chat') {
         return;
     }
-    
-    // Adiciona a mensagem no buffer de mensagens quebradas//
-    messageComplet.get(phone).push(messageBody);
 
-    // Verifica se já existe um timeout para o cliente e limpa caso exista//
-    if (typingTimeouts.has(phone)) {
-        clearTimeout(typingTimeouts.get(phone));
-    }
+    const response_gpt = await gpt(messageBody, phone);// Envia mensagem do cliente para processamento no gpt//
 
-    // Adiciona ou reinicia o timeout para o cliente específico//
-    typingTimeouts.set(phone, setTimeout(async () => {
-        const allMessages = messageComplet.get(phone).join(' ');//juntando todas as mensagens quebradas//
+    const processMessage = await tagProcess(response_gpt,phone);//Função que verifica tag de substituição//
 
-        //simula o "digitando..." enquanto aguarda a resposta do chatbot
-        await chat.sendStateTyping();
+    if(processMessage.processMessage){
+        await chat.sendStateTyping();//simula o "digitando..."//
 
-        // Envia uma única mensagem para o gpt//
-        const response_gpt = await gpt(allMessages);
+        // Envia mensagem com correção de tag para o cliente//
+        await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${processMessage.processMessage}`);
 
-        //Função que verifica tag de substituição//
-        const processMessage = await tagProcess(response_gpt);
+        if(processMessage.location){//verifica se a localização foi solicitada//
+            const location = new Location(-16.6492995,-49.1799726);//gera localização da loja//
+            await client.sendMessage(number, location, "Henry Burguer - Goiânia, GO");//envia localização para o cliente//
 
-        if(processMessage.processMessage){
-            // Envia mensagem com correção de tag para o cliente//
-            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${processMessage.processMessage}`);
-            if(processMessage.location){
-                const location = new Location(-16.6492995,-49.1799726);//gera localização da loja//
-                await client.sendMessage(number, location, "Henry Burguer - Goiânia, GO");//envia localização para o cliente//
-
-            }else if(processMessage.pdf){
-                await client.sendMessage(number, mediaPdf);//envia cardápio em pdf para cliente//
-            }
-        }else{
-            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
+        }else if(processMessage.pdf){//verifica se cardapio em PDF foi solicitado//
+            await client.sendMessage(number, mediaPdf);//envia cardápio em pdf para cliente//
         }
+    }else{
+        await chat.sendStateTyping();//simula o "digitando..."//
 
-        // Após o envio, limpa o buffer de mensagens e o timeout//
-        messageComplet.delete(phone);
-        typingTimeouts.delete(phone);
-
-    }, 4000)); // Espera 4 segundos para processar mensagens quando o cliente para de digitar//
-});
-
-// Listener (ouvinte) para o evento de digitação//
-/*Faz o chatbot aguardar 4 segundos sempre que o cliente começa a digitar*/
-client.on('typing', async (chat) => {
-    const phone = chat.id.user;
-    // Se o cliente está digitando, limpa o timer para que ele conclua o texto//
-    if (typingTimeouts.has(phone)) {
-         clearTimeout(typingTimeouts.get(phone));
+        //Aguarda 2 segundos antes de enviar mensagem para o cliente//
+        setTimeout(async () => {
+            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
+        }, 2000);
     }
 });
