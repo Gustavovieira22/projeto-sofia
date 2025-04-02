@@ -68,8 +68,6 @@ client.on('ready', () => {
     console.log('Chatbot Online!');
 });
 
-
-
 //Listener para envento "receber mensagem". (ouve todas as mensagens recebidas)
 client.on('message_create',async(message) =>{ 
     const message_time = message.timestamp * 1000; //captura a hora que a mensagem foi enviada//
@@ -82,6 +80,28 @@ client.on('message_create',async(message) =>{
     //ignorar as mensagems de grupos e status//
     if(chat.isGroup || message.isStatus){
         console.log('Ignorando mensagem de grupo | status');
+        return;
+    }
+    
+    if(typeChat === 'location'){//salvar a localização do cliente na base de dados
+        if(!message.fromMe){
+            await saveLocation(chat.lastMessage.location.latitude, chat.lastMessage.location.longitude, phone);
+            if(messages.has(phone)){
+                messages.get(phone).push({role: "system", content:`A localização para o endereço do cliente é: https://maps.google.com/?q=${chat.lastMessage.location.latitude},${chat.lastMessage.location.longitude}`});
+            }
+            return;
+        }
+    }
+
+    if(messageBody.length>250 && !message.fromMe){//Ignora mensagens muito longas, desativa atendimento de chatbot//
+        console.log(`Mensagem muito longa, desativando chatbot para: ${phone}`);
+        controlClient.set(phone, false);
+        return;
+    }
+
+    //ignora mensagens enviadas antes da inicialização do chatbot//
+    if (message_time < botStart_time) {
+        console.log("Ignorando mensagens antigas.");
         return;
     }
 
@@ -97,36 +117,10 @@ client.on('message_create',async(message) =>{
         }
 
     }
-    
-    if(typeChat === 'location'){//salvar a localização do cliente na base de dados
-        if(!message.fromMe){
-            await saveLocation(chat.lastMessage.location.latitude, chat.lastMessage.location.longitude, phone);
-            messages.get(phone).push({role: "system", content:`A localização para o endereço do cliente é: https://maps.google.com/?q=${chat.lastMessage.location.latitude},${chat.lastMessage.location.longitude}`});
-            return;
-        }
-
-    }
-
-    if(!(controlClient.get(phone))){
-        console.log(`chatbot desativado para o cliente: ${phone}`);
-        return;
-    }
-
-    if(messageBody.length>250 && !message.fromMe){//Ignora mensagens muito longas, desativa atendimento de chatbot//
-        console.log(`Mensagem muito longa, desativando chatbot para: ${phone}`);
-        controlClient.set(phone, false);
-        return;
-    }
-
-    //ignora mensagens enviadas antes da inicialização do chatbot//
-    if (message_time < botStart_time) {
-        console.log("Ignorando mensagens antigas.");
-        return;
-    }
 
     //Salva no histórico mensagens enviadas pelo atendimento humano//
     if(message.fromMe){
-        if(messages.has(phone)){//desativa o chatbot para o contato que receber essa mensagem//
+        if(controlClient.has(phone)){//desativa o chatbot para o contato que receber essa mensagem//
             if(messageBody.includes("desativar")){
               controlClient.set(phone,false);
               return;
@@ -135,6 +129,11 @@ client.on('message_create',async(message) =>{
               return;
             }
           }
+        return;
+    }
+    
+    if(!(controlClient.get(phone))){
+        console.log(`chatbot desativado para o cliente: ${phone}`);
         return;
     }
 

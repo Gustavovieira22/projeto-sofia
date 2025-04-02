@@ -6,12 +6,14 @@ Requisitos para execução:
 O que Sofia faz? 
 - conversa com o cliente até a disponibilidade de um atendente humano
 - tira eventuais duvidas dos clientes
-- organiza a estrutura basica do pedido
+- chama função específica que registra pedido
 - explica sobre itens do cardápio e fornece preços
 - envia localização, cardápio digital e cardápio em pdf para o cliente
+- desativa o chat bot de uma conversa
+- salva dados do cliente automaticamente (nome, telefonne, endereço e localização)
+- resgata dados do cliente para anexar ao pedido
 
 Próximas atualizações:
-- salvar dados do cliente (nome, endereço, telefone e informações/ preferências dos clientes)
-- interface gráfica para alteração de prompts/ regras de atendimento do gpt
-- ativar e desativar chatbot em uma conversa 
+- criar estrututa para salvar preferências de clientes
+- interface gráfica para alteração de prompts/ regras de atendimento do gpt 
 
