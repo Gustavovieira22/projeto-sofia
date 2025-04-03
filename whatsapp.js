@@ -111,11 +111,10 @@ client.on('message_create',async(message) =>{
         controlClient.set(phone, true);//salva cliente no cache status de atendimento//
 
         //Primeira mensagem de saudação//
-        if(typeChat === 'chat'){
+        if(typeChat === 'chat' && !message.fromMe && controlClient.get(phone)){
             await chat.sendStateTyping(); //simula o "digitando..."//
             await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n⭐⭐⭐⭐⭐\nSeja bem-vindo(a) ao *Henry Burguer!*\nhttps://henryburguer.com.br/`);
         }
-
     }
 
     //Salva no histórico mensagens enviadas pelo atendimento humano//
@@ -124,7 +123,7 @@ client.on('message_create',async(message) =>{
             if(messageBody.includes("desativar")){
               controlClient.set(phone,false);
               return;
-            }else if(!(messageBody.includes("Chatbot IA - Sofia")) && typeChat === 'chat' && messageBody != ""){//captura as mensagens enviadas pelo atendimento humano//
+            }else if(!(messageBody.includes("Chatbot IA - Sofia")) && typeChat === 'chat' && messageBody != "" && messages.has(phone)){//captura as mensagens enviadas pelo atendimento humano//
               messages.get(phone).push({role: "assistant", content:`Mensagem enviada pelo atendente humano: ${messageBody}`});
               return;
             }
@@ -143,7 +142,7 @@ client.on('message_create',async(message) =>{
 
         //Aguarda 2 segundos antes de enviar mensagem para o cliente//
         setTimeout(async () => {
-            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\nDesculpe, ainda *não consigo ler imagens*. Você pode *escrever em texto*✏️ ou me *enviar um áudio*🔊 descrevendo o que está na imagem, por favor?😔`);
+            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\nDesculpe, ainda *não consigo ler imagens*. Você pode *escrever em texto* ou me *enviar um áudio* descrevendo o que está na imagem, por favor?😔`);
         }, 2000);
         return; 
     }

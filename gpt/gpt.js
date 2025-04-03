@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 const fs = require("fs");
 dotenv.config();
 
-const {controlClient, messages} = require('../utils/controlClient');
+const {controlClient, messages,serviceHours} = require('../utils/controlClient');
 
 //Importando banco de dados do Cliente//
 const dbClient = require('../models/Client');
@@ -29,13 +29,18 @@ const openai = new OpenAI({
 // Função de chamada chatbot//
 async function gpt(message_body, phone) {
 
+  //Verifica se está dentro do horário de atedimento da loja//
+  if(serviceHours()){
+    return `🔴 *Estamos Fechados!* 🔴\n\n Atendimento de *Segunda* a *Sábado* das *18:00h* às *22:50h*.`;
+  }
+
   if(!messages.has(phone)){
     messages.set(phone,[]);
     messages.get(phone).push(...rulesCache);//grava regras de atendimento nos parametros do chatbot//
     messages.get(phone).push(...menuCache);//grava o conteúdo do cardápio nos parametros do chatbot//
     messages.get(phone).push(...deliveryCahe);
     const client = await dbClient.findOne({phone});
-
+    
     messages.get(phone).push({role: "system", content:`Este é o telefone do cliente: ${phone}`});
     
     if(client.name){
@@ -45,9 +50,9 @@ async function gpt(message_body, phone) {
     }
 
     if(client.address?.location.lat && client.address?.location.long){
-      messages.get(phone).push({role: "system", content:`A localização para o endereço do cliente é: https://maps.google.com/?q=${client.address.location.lat},${client.address.location.long}`});
+      messages.get(phone).push({role: "system", content:`A localização do cliente é: https://maps.google.com/?q=${client.address.location.lat},${client.address.location.long}`});
     }else{
-      messages.get(phone).push({role: "system", content:`Cliente ainda não possui localização registrada no sistema.`});
+      messages.get(phone).push({role: "system", content:`A localização do cliente não está registrada no sistema.`});
     }
 
     if(client.address.address_write){

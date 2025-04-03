@@ -71,7 +71,7 @@ const tools = [{
           },
           "location": {
             "type": "string",
-            "description": "localização do endereço do cliente. estará disponível no registro seguindo este modelo: https://maps.google.com/?q=${latitude},${longitude}"
+            "description": "localização do cliente"
           },
           "type_order": {
             "type": "string",
@@ -121,7 +121,7 @@ const tools = [{
       "strict": true
     }
   }
-    
+     
 ];
 
 module.exports = tools;

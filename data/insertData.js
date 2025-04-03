@@ -65,9 +65,11 @@ const inserirRegras = async()=>{
 
             {role: "system", content: `No momento o Henry Burguer não oferece atendimento com mesas no local, pedidos só podem ser feitos para retirada ou entrega.`},
           
-            {role: "system", content: `Nunca faça afirmações fechadas, ou seja, que possam fazer o cliente ter que esperar. Nunca peça para o cliente aguardar você fazer algo. Exemplo: "Vou registrar seu pedido, aguarde...", ou, "Vou verificar essa informação, aguarde...". Nunca faça afirmações dessa natura, essas afirmações encerrar a conversa, ou fazem o cliente ter que esperar. Sempre responda o cliente imediatamente, ou faça a chamada de função imediatamente, não peça para o cliente aguardar, é proibido pedir que o cliente aguarde.`},
-          
             {role: "system", content: `Leve em consideração todas as respostas fornecidas pelo atendente humano. As respostas fornecidas pelo atendente humano podem ter informações relevantes para o registro do pedido.`},
+            
+            {role: "system", content: `Nunca faça afirmações fechadas, ou seja, que possam fazer o cliente ter que esperar. Nunca peça para o cliente aguardar você fazer algo. Exemplo: "Vou registrar seu pedido, aguarde...", ou, "Vou verificar essa informação, aguarde...". Nunca faça afirmações dessa natura, essas afirmações encerrar a conversa, ou fazem o cliente ter que esperar. Sempre responda o cliente imediatamente, ou faça a chamada de função imediatamente, não peça para o cliente aguardar, é proibido pedir que o cliente aguarde.`},
+
+            {role: "system", content: `Após reunir as informações do pedido nunca diga ao cliente que você irá registrar o pedido, simplesmente chame a função registerOrder que ela será a responsável por registrar o pedido.`},
 
             //Fechamento de pedido:
             {role: "system", content: `No momento em que estiver com as informações: nome, telefone, tipo de pedido (entrega ou retirada), endereço (se o pedido for entrega), localização do endereço (se estiver disponível em seu registro) quantidade de cada item ou adicional, nome de cada item ou adicional, observações sobre o pedido, e forma de pagamento; chame a função registerOrder passando essas informações como parametros.`},
