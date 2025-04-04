@@ -1,19 +1,14 @@
 const OpenAI = require("openai");
 const dotenv = require("dotenv");
-const fs = require("fs");
 dotenv.config();
 
-const {controlClient, messages,serviceHours} = require('../utils/controlClient');
+//variáveis de controle do cliente//
+const {controlClient, messages, serviceHours} = require('../utils/controlClient');
 
 //Importando banco de dados do Cliente//
 const dbClient = require('../models/Client');
 
-//importando funções para inicialização do banco de dados//
-const connectDB = require('../config/database');//arquivo de conexão com o banco de dados//
-const {rulesCache, menuCache, deliveryCahe,initData} = require('../data/dataLoader');//sincroniza os dados do banco em cache local//
-
-//inicia função que carrega variaveis com parametros para configuração do gpt//
-gptParams();
+const {rulesCache, menuCache, deliveryCahe} = require('../data/dataLoader');//sincroniza os dados do banco em cache local//
 
 //Importando funções de lógica de processamento//
 const {saveName, saveAddress, calculateOrder} = require('../services/clienteService');
@@ -29,18 +24,17 @@ const openai = new OpenAI({
 // Função de chamada chatbot//
 async function gpt(message_body, phone) {
 
-  //Verifica se está dentro do horário de atedimento da loja//
-  if(serviceHours()){
-    return `🔴 *Estamos Fechados!* 🔴\n\n Atendimento de *Segunda* a *Sábado* das *18:00h* às *22:50h*.`;
+  if(!serviceHours()){//Verifica se está no horário de atendimento//
+    return"🔴 *Estamos Fechados!* 🔴\n\nAtendemos de  *Segunda* a *Sábado* das *18:00* às *22:50*";
   }
 
   if(!messages.has(phone)){
     messages.set(phone,[]);
     messages.get(phone).push(...rulesCache);//grava regras de atendimento nos parametros do chatbot//
     messages.get(phone).push(...menuCache);//grava o conteúdo do cardápio nos parametros do chatbot//
-    messages.get(phone).push(...deliveryCahe);
+    messages.get(phone).push(...deliveryCahe);//grava a lista de bairros que a loja entrega nos parametros do chatbot//
     const client = await dbClient.findOne({phone});
-    
+
     messages.get(phone).push({role: "system", content:`Este é o telefone do cliente: ${phone}`});
     
     if(client.name){
@@ -129,15 +123,14 @@ async function gpt(message_body, phone) {
             };
 
             const detalhes = await calculateOrder(arguments.items, dataClient);
-            console.log(detalhes);
 
             messages.get(phone).push({role: "system", content:`Pedido registrado com sucesso no sistema!`}); 
-            
-            if(controlClient.has(phone)){
+             
+            if(controlClient.has(phone)){//desativa o chatbot após registrar o pedido do cliente//
               controlClient.set(phone,false);
             }
 
-            return detalhes;
+            return detalhes; //retorna o pedido organizado//
           }
 
         } catch (error) {
@@ -146,20 +139,11 @@ async function gpt(message_body, phone) {
         }
       }
     }
-    console.log(messages.get(phone));
     return responseGpt; //retornar a mensagem gerada pelo GPT//      
-
   } catch (error) {
     console.error("Erro ao acessar a API:", error.response?.data || error.message);
     return `Erro ao processar resposta!`;
   }
-};
-
-/*Função gptParams() é responsável por chamar as funções de conexão e inicialização de variaveis de cache*/
-/*rulesCache e menuCache possuem os parametros necessários para a configuração do chatbot gpt*/
-async function gptParams() {
-  await connectDB(); // Aguarda a conexão com o banco de dados//
-  await initData();  // recupera os dados do banco e guarda em cache local//
 };
 
 module.exports = gpt;

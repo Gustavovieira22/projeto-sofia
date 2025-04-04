@@ -15,7 +15,7 @@ const {saveClient, saveLocation} = require('./services/clienteService');
 
 //variaveis de controle//
 const botStart_time = Date.now();//hora da inicialização do chatbot//
-const {controlClient, messages} = require('./utils/controlClient'); //controle de status de atendimento // Histórico de mensagens do cliente//
+const {controlClient, messages} = require('./utils/controlClient'); //controle de status de atendimento //Histórico de mensagens do cliente//
 
 //importa cardápio em formato PDF//
 const pdfPath = `./cardapio_pdf/cardapio_2025_01.pdf`;
@@ -43,9 +43,6 @@ const client = new Client({
         ],
     }
 });
-
-// Inicia o cliente
-client.initialize();
 
 //apresenta o percentual de mensagens carregadas
 client.on('loading_screen', (percent, message) => {
@@ -186,6 +183,10 @@ client.on('message_create',async(message) =>{
 
                     }else if(processMessage.pdf){//verifica se o cardapio em PDF foi solicitado//
                         await client.sendMessage(number, mediaPdf);//envia cardápio em pdf para cliente//
+
+                    }else if(processMessage.order){//verifica se o pedido foi lançado//
+                        await chat.sendStateTyping();//simula o "digitando..."//
+                        await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n✅Pedido enviado com sucesso!\n_Aguarde a confirmação pelo atendente!_`);
                     }
                 }, 2000);
                 return;   
@@ -223,6 +224,10 @@ client.on('message_create',async(message) =>{
 
         }else if(processMessage.pdf){//verifica se cardapio em PDF foi solicitado//
             await client.sendMessage(number, mediaPdf);//envia cardápio em pdf para cliente//
+
+        }else if(processMessage.order){//verifica se o pedido foi lançado//
+            await chat.sendStateTyping();//simula o "digitando..."//
+            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n✅Pedido enviado com sucesso!\n⏳ _Aguarde a confirmação do atendente!_`);
         }
     }else{
         await chat.sendStateTyping();//simula o "digitando..."//
@@ -233,3 +238,5 @@ client.on('message_create',async(message) =>{
         }, 2000);
     }
 });
+
+module.exports = client;

@@ -137,7 +137,8 @@ async function calculateOrder(items, dataClient) {
     description.push(`\nTaxa de entrega *R$3,00*`);
   }
   description.push(`\n\n*Total:* ${totalOrder.toFixed(2)} - *${dataClient.payment}*`);
-  
+  description.push("#order");//tag para indicar que o pedido foi finalizado//
+
   return description.join('\n');//retorna a descrição completa do pedido//
 };
 
