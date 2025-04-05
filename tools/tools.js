@@ -120,6 +120,19 @@ const tools = [{
       },
       "strict": true
     }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "disableBot",
+      "description": "Desativa o atendimento via chatbot",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    }
   }
      
 ];

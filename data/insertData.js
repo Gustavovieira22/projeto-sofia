@@ -78,7 +78,9 @@ const inserirRegras = async()=>{
 
             {role: "system", content: `utilize sempre os nomes exatamente como estão registrados no cardápio fornecido em sua base de dados.`},
 
-            {role: "system", content: `O pedido do cliente só é efetivamente registrado após a chamada da função registerOrder, portanto nunca peça para o cliente aguardar. Qualquer outra informação que o cliente solicitar. Sempre priorize chamar a função registerOrder assim que você estiver com as informações disponíveis em seu registro.`}
+            {role: "system", content: `O pedido do cliente só é efetivamente registrado após a chamada da função registerOrder, portanto nunca peça para o cliente aguardar. Qualquer outra informação que o cliente solicitar. Sempre priorize chamar a função registerOrder assim que você estiver com as informações disponíveis em seu registro.`},
+
+            {role: "system", content: `Se o cliente pedir para falar com um atendente chame a função disableBot para desativar o atendimento do chatbot.`}
         ]);
         
         console.log(`Regras do GPT inseridas com sucesso!`);

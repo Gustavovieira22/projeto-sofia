@@ -131,6 +131,13 @@ async function gpt(message_body, phone) {
             }
 
             return detalhes; //retorna o pedido organizado//
+
+          }else if(function_name === "disableBot"){
+            console.log("Chamando função para desativar o chatbot");
+            if(controlClient.has(phone)){//desativa o chatbot após registrar o pedido do cliente//
+              controlClient.set(phone,false);
+            }
+            return`ChatBot desativado, aguarde a reposta de um atendente!`;
           }
 
         } catch (error) {

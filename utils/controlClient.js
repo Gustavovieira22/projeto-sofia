@@ -14,7 +14,7 @@ function serviceHours() {
     // Obtendo a hora atual//
     const date = new Date();
     const horaAtual = date.toTimeString().split(' ')[0];
-    const abrir = '17:50'; 
+    const abrir = '10:50'; 
     const fechar = '22:49';
 
     //Abertos das 18:00 às 22:50//

@@ -21,8 +21,8 @@ async function tagProcess(message,phone) {
             const processMessage = message.replace("#pdf",`📑Aguarde alguns instantes, já estou enviando o cardápio em PDF:`);
             return {processMessage, location, pdf, order};
             
-        }else if(message.includes('#saveName') || message.includes('#saveAddress')){
-            const processMessage = await gpt("Continuar atendimento.",phone);
+        }else if(message.includes('#saveName') || message.includes('#saveAddress')){//quando a função saveName é chamada pelo gpt//
+            const processMessage = await gpt("Continuar atendimento.",phone);//envia mensagem para o gpt continuar com o atendimento//
             return {processMessage, location, pdf, order};
         } else if(message.includes("#order")){
             order = true;
