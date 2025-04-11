@@ -5,6 +5,9 @@ const path = require('path');
 const fs = require('fs');
 const { exit } = require('process');
 
+//Função de Broadcasting que atualiza frontend em tempo real//
+const broadcasting = require('./websocket/broadcasting');
+
 //Funções de chamada para modelos de IA//
 const gpt = require('./gpt/gpt'); //Chamada para API gpt - Salva respostas do atendente humano no histórico//
 const whisper = require('./gpt/whisper');//converte áudio em texto//
@@ -86,6 +89,8 @@ client.on('message_create',async(message) =>{
             if(messages.has(phone)){
                 messages.get(phone).push({role: "system", content:`A localização para o endereço do cliente é: https://maps.google.com/?q=${chat.lastMessage.location.latitude},${chat.lastMessage.location.longitude}`});
             }
+            //envia dados do cliente em atendimento para o frontend//
+            await broadcasting(controlClient);
             return;
         }
     }
@@ -106,6 +111,8 @@ client.on('message_create',async(message) =>{
     if(!controlClient.has(phone)){
         await saveClient(phone);//Verifica se cliente está registrado no banco de dados//
         controlClient.set(phone, true);//salva cliente no cache status de atendimento//
+        
+        await broadcasting(controlClient);//envia dados do cliente em atendimento para o frontend//
 
         //Primeira mensagem de saudação//
         if(typeChat === 'chat' && !message.fromMe && controlClient.get(phone)){
@@ -128,6 +135,7 @@ client.on('message_create',async(message) =>{
         return;
     }
     
+    //Interrompe o fluxo caso o cliente não esteja com atendimento setado em true//
     if(!(controlClient.get(phone))){
         console.log(`chatbot desativado para o cliente: ${phone}`);
         return;
@@ -144,7 +152,7 @@ client.on('message_create',async(message) =>{
         return; 
     }
 
-//---------------------------------------------ÁUDIO---------------------------------------------------//
+//------------------------------------TRATAMENTO DE ÁUDIO--------------------------------------//
     //salvar e interpretar o áudio enviado pelo cliente//
     if(message.hasMedia && typeChat == 'ptt'){
         const media = await message.downloadMedia();
@@ -201,7 +209,7 @@ client.on('message_create',async(message) =>{
             }
         }
     }
-//---------------------------------------------ÁUDIO---------------------------------------------------//
+//------------------------------------TRATAMENTO DE ÁUDIO--------------------------------------//
 
     //ignorar qualquer mensagem que não seja do tipo chat = texto//
     if(typeChat !== 'chat') {

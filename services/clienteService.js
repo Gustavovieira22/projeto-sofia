@@ -1,6 +1,8 @@
 //Importando banco de dados do Cliente//
 const dbClient = require('../models/Client');
 const dbMenu = require('../models/Menu');
+const broadcasting = require('../websocket/broadcasting');
+const {controlClient} = require('../utils/controlClient');
 
 async function saveClient(phone) {
 //Função que salva telefone do cliente no banco de dados//
@@ -39,6 +41,7 @@ async function saveName(name, phone) {
         
       if(client){
         console.log(`Nome do cliente ${client.name} cadastrado para: ${client.phone}`);
+        await broadcasting(controlClient);
         return true;
       }else{
         console.log(`Cliente não encontrado no banco de dados: ${phone}`);
@@ -84,6 +87,7 @@ async function saveAddress(address, phone) {
       {new:true});
       if(client){
         console.log(`Endereço cadastrado para o cliente: ${client.phone}`);
+        await broadcasting(controlClient);
         return true;
       }else{
         console.log(`Cliente não encontrado no banco de dados: ${phone}`);
@@ -138,7 +142,8 @@ async function calculateOrder(items, dataClient) {
   }
   description.push(`\n\n*Total:* ${totalOrder.toFixed(2)} - *${dataClient.payment}*`);
   description.push("#order");//tag para indicar que o pedido foi finalizado//
-
+  await broadcasting(controlClient);
+  
   return description.join('\n');//retorna a descrição completa do pedido//
 };
 

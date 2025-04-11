@@ -1,18 +1,22 @@
 {
   "name": "projeto-sofia",
-  "version": "1.0.0",
+  "version": "1.1.3",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "gustavovieira",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
     "mongoose": "^8.13.0",
     "openai": "^4.87.3",
     "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js"
+    "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js",
+    "ws": "^8.18.1"
   }
 }

@@ -1,0 +1,35 @@
+<%- include ('partials/header.ejs') %>
+<script src="/js/editClients.js" defer></script>
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">Alterar dados de Cliente</h5>
+        </div>
+        <div class="card-body">
+           <form id="formEdit">
+            <input type="text" hidden id="clienteId">
+            <div class="container d-flex justify-content-center">
+                <input type="text" class="form-control w-50" placeholder="Nome" id="name" maxlength="99">
+            </div><br>
+            <div class="container d-flex justify-content-center">
+                <input type="text" class="form-control w-50" placeholder="Telefone" id="phone" maxlength="15">
+            </div><br>
+            <div class="container d-flex justify-content-center">
+                <input type="text" class="form-control w-50" placeholder="CPF" id="cpf" maxlength="14">
+            </div><br>
+            <div class="container d-flex justify-content-center">
+                <textarea class="form-control w-50" rows="2" placeholder="Endereço" id="address"></textarea>
+            </div><br>
+            <div class="container d-flex justify-content-center gap-2">
+                <input type="text" class="form-control w-25" placeholder="latitude" id="loc_lat">
+                <input type="text" class="form-control w-25" placeholder="longitude" id="loc_long">
+            </div><br>
+            <div class="container d-flex justify-content-center">
+                <button type="button" class="btn btn-lg w-15 btn-danger mb-5 me-3" onclick="window.history.back()">Voltar</button>
+                <button type="submit" class="btn btn-lg w-25 btn-success mb-5">Alterar</button>
+            </div>
+           </form> 
+        </div>
+    </div>
+</div>
+<%- include ('partials/footer.ejs') %>
