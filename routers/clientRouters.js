@@ -17,5 +17,6 @@ router.get('/api/clientes',clientController.allClients);
 router.get('/api/status',clientController.controlClient);
 router.get('/api/service/:phone/:service',clientController.changeService);
 router.get('/api/contador-clientes',clientController.countClients);
+router.get('/api/buscar/cliente/:searchField',clientController.searchClient);
 
 module.exports = router;

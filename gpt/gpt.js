@@ -1,6 +1,7 @@
 const OpenAI = require("openai");
 const dotenv = require("dotenv");
 dotenv.config();
+const broadcasting = require('../websocket/broadcasting');
 
 //variáveis de controle do cliente//
 const {controlClient, messages, serviceHours} = require('../utils/controlClient');
@@ -39,22 +40,20 @@ async function gpt(message_body, phone) {
     
     if(client.name){
       messages.get(phone).push({role: "system", content:`O nome do cliente é: ${client.name}`});
-    }else{
-      messages.get(phone).push({role: "system", content:`Pergunte o nome do cliente antes de inicar o antedimento e chame a função saveName passando como parametro o nome e o telefone do cliente.`});
     }
 
-    if(client.address?.location.lat && client.address?.location.long){
+    if(client.address?.location?.lat && client.address?.location?.long){
       messages.get(phone).push({role: "system", content:`A localização do cliente é: https://maps.google.com/?q=${client.address.location.lat},${client.address.location.long}`});
     }else{
       messages.get(phone).push({role: "system", content:`A localização do cliente não está registrada no sistema.`});
     }
 
-    if(client.address.address_write){
+    if(client.address?.address_write){
       messages.get(phone).push({role: "system", content:`O endereço do cliente é: ${client.address.address_write}`});
 
-      messages.get(phone).push({role: "system", content:`Caso o pedido seja para Entrega, pergunte ao cliente se o endereço registrado está correto. Se o endereço estiver correto seiga o atendimento normalmente.`});
+      messages.get(phone).push({role: "system", content:`Caso o pedido seja para entrega, pergunte ao cliente se o endereço registrado está correto. Se o endereço estiver correto, siga o atendimento normalmente.`});
 
-      messages.get(phone).push({role: "system", content:`Se o cliente quiser alterar o endereço de entrega, peça para que o cliente envie o novo endereço por escrito, após isso reescreva o novo endereço do cliente e paça para que ele confirme, com o novo endereço confirmado chame a função saveAddress passando como parametro o novo endereço e o telefone do cliente.`});
+      messages.get(phone).push({role: "system", content:`Se o cliente quiser alterar o endereço de entrega, peça para que envie o novo endereço por escrito. Após isso, reescreva o novo endereço do cliente e peça para que ele confirme. Com o novo endereço confirmado, chame a função saveAddress passando como parâmetro o novo endereço e o telefone do cliente.`});
 
     }else{
       messages.get(phone).push({role: "system", content:`O endereço do cliente ainda não está registrado no sistema.`});
@@ -69,8 +68,8 @@ async function gpt(message_body, phone) {
         temperature: 0.3,      // Menos aleatório, mais focado
         top_p: 0.5,            // Garantindo diversidade controlada
         presence_penalty: 1.0, // Menos desvio para tópicos irrelevantes
-        max_tokens: 300,       // Respostas detalhadas, mas não excessivas
-        messages: messages.get(phone),    //mensagens e parametros de funcionamento//
+        max_tokens: 200,       // Respostas detalhadas, mas não excessivas
+        messages: messages.get(phone),  //mensagens e parametros de funcionamento//
         tools: tools
     });
 
@@ -129,7 +128,7 @@ async function gpt(message_body, phone) {
             if(controlClient.has(phone)){//desativa o chatbot após registrar o pedido do cliente//
               controlClient.set(phone,false);
             }
-
+            await broadcasting(controlClient);
             return detalhes; //retorna o pedido organizado//
 
           }else if(function_name === "disableBot"){
@@ -137,7 +136,8 @@ async function gpt(message_body, phone) {
             if(controlClient.has(phone)){//desativa o chatbot após registrar o pedido do cliente//
               controlClient.set(phone,false);
             }
-            return`ChatBot desativado, aguarde a reposta de um atendente!`;
+            await broadcasting(controlClient);
+            return`*ChatBot* desativado, _aguarde a reposta de um atendente!_⏳`;
           }
 
         } catch (error) {
@@ -146,6 +146,7 @@ async function gpt(message_body, phone) {
         }
       }
     }
+    console.log(messages.get(phone));
     return responseGpt; //retornar a mensagem gerada pelo GPT//      
   } catch (error) {
     console.error("Erro ao acessar a API:", error.response?.data || error.message);

@@ -59,27 +59,20 @@ exports.controlClient = async(req, res)=>{
 exports.changeService = async(req, res)=>{
     const {phone, service} = req.params;
 
-    if(controlClient.has(phone)){
-        if(service === 'false'){
-            controlClient.set(phone, false);
-        }else{
-            controlClient.set(phone, true);
-        }
-        res.json("Status alterado com sucesso.");   
-    }else{
-        res.json("Cliente não localizado.");   
-    }
+    const boolService = service === 'true';//converte string 'true - false' em booleano//
+    
+    controlClient.set(phone,boolService);
 };
 
 //Atualiza dados do cliente no banco de dados//
 exports.edit_dataClient = async(req, res)=>{
     let {name, phone, address, loc_lat, loc_long} = req.body;
     
-    address = address === '' ? null : address.replace(/[\r\n]+/g, ' ');
-    loc_lat = loc_lat === '' ? null : loc_lat;
-    loc_long = loc_long === '' ? null : loc_long;
-    name = name === '' ? null : name;
-
+    address = address?.trim() ? address.replace(/[\r\n]+/g, ' ') : null;
+    loc_lat = loc_lat?.toString().trim() ? loc_lat : null;
+    loc_long = loc_long?.toString().trim() ? loc_long : null;
+    name = name?.trim() ? name : null;
+    
     try {
         const newClient = await dbClient.updateOne(
             {phone},
@@ -110,4 +103,28 @@ exports.countClients = async(req, res)=>{
     } catch (error) {
         res.status(500).json("Erro ao contar os clientes no banco de dados.");
     }
+};
+
+//Função que retorna busca de clientes no banco de dados//
+exports.searchClient = async (req, res)=>{
+    const {searchField} = req.params;//texto do campo de busca//
+
+    try {
+        const resultado = await dbClient.find({
+          $or: [
+            { phone: { $regex: searchField, $options: 'i' } },//telefones correspondentes//
+            { name: { $regex: searchField, $options: 'i' } },//nomes correspondentes//
+            { 'address.address_write': { $regex: searchField, $options: 'i' } }//endereços correspondentes//
+          ]
+        });
+        
+        if(resultado.length > 0){//retorna os dados caso tenha resultado//
+            res.json(resultado);
+        }else{//retorna falso caso não haja nenhum cliente na busca//
+            res.json(false);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
+        res.status(500).json(false);//falso caso haja algum erro no banco de dados//
+      }
 };

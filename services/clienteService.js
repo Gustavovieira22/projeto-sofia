@@ -2,7 +2,7 @@
 const dbClient = require('../models/Client');
 const dbMenu = require('../models/Menu');
 const broadcasting = require('../websocket/broadcasting');
-const {controlClient} = require('../utils/controlClient');
+const {controlClient, messages} = require('../utils/controlClient');
 
 async function saveClient(phone) {
 //Função que salva telefone do cliente no banco de dados//
@@ -87,6 +87,20 @@ async function saveAddress(address, phone) {
       {new:true});
       if(client){
         console.log(`Endereço cadastrado para o cliente: ${client.phone}`);
+
+        const history = messages.get(phone);
+
+        const frasesParaRemover = [
+            'A localização do cliente é',
+            'A localização do cliente não está registrada no sistema'
+          ];
+          
+          const filtered = history.filter(
+            msg => !frasesParaRemover.some(frase => msg.content.startsWith(frase))
+          );
+          
+        messages.set(phone,filtered);
+
         await broadcasting(controlClient);
         return true;
       }else{
@@ -142,8 +156,6 @@ async function calculateOrder(items, dataClient) {
   }
   description.push(`\n\n*Total:* ${totalOrder.toFixed(2)} - *${dataClient.payment}*`);
   description.push("#order");//tag para indicar que o pedido foi finalizado//
-  await broadcasting(controlClient);
-  
   return description.join('\n');//retorna a descrição completa do pedido//
 };
 

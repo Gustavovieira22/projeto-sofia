@@ -2,7 +2,8 @@
 
 //Função que faz a conexão com o WebSocket do servidor//
 function conectionWS(){
-    const socket = new WebSocket('ws://localhost:8080');
+    const IP = '192.168.1.104';
+    const socket = new WebSocket(`ws://${IP}:8080`);
     socket.onmessage = async function(event){
         const data = JSON.parse(event.data);
         await displayClient(data);
@@ -21,7 +22,6 @@ async function current_clients() {
         });
         const data = await response.json();
         if(data){
-            console.log(data);
             await displayClient(data);
         }else{
             console.log('Nenhum cliente no banco de dados!');
@@ -83,7 +83,7 @@ async function displayClient(data){
             const btnAddress = document.createElement('button');
             btnAddress.textContent = 'Adicionar Endereço';
             btnAddress.setAttribute('class','btn btn-danger btn-sm');
-            btnAddress.onclick = ()=>{};
+            btnAddress.onclick = async ()=>{await callEdit(data[i])};
             cellAddress.appendChild(btnAddress); 
         }
 
@@ -103,7 +103,7 @@ async function displayClient(data){
         const btnEdit = document.createElement('button');
         btnEdit.setAttribute('class','btn btn-outline-primary btn-sm');
         btnEdit.innerHTML = '<i class="bi bi-pencil-square"></i>';
-        btnEdit.onclick = ()=>{callEdit(data[i])};
+        btnEdit.onclick = async ()=>{await callEdit(data[i])};
 
         cellOptions.setAttribute('class','btn-group');
         cellOptions.appendChild(btnEdit);
@@ -166,11 +166,12 @@ async function callEdit(client){
 
     //construindo objeto com dados do cliente//
     const dataClient = {};
-    dataClient.name = client.name;
-    dataClient.phone = client.phone;
-    dataClient.address =  client.address.address_write;
-    dataClient.loc_lat = client.address.location.lat;
-    dataClient.loc_long = client.address.location.long;
+    
+    dataClient.name = client?.name || null;
+    dataClient.phone = client?.phone || null;
+    dataClient.address =  client?.address?.address_write || null;
+    dataClient.loc_lat = client?.address?.location?.lat || null;
+    dataClient.loc_long = client?.address?.location?.long || null;
 
     //salvando dados no localStorage do navegador//
     localStorage.setItem('dataClient',JSON.stringify(dataClient));

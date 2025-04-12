@@ -12,6 +12,7 @@ const cors = require('cors');
 
 const app = express();
 const PORT = 3000;
+const IP = '192.168.1.104';
 
 //Importando rotas para o servidor//
 const clientRouters = require('./routers/clientRouters');
@@ -28,7 +29,7 @@ app.use(cors());
 app.use('/',clientRouters);
 
 //iniciando servidor local//
-app.listen(PORT,(error)=>{
+app.listen(PORT,IP,(error)=>{
     if(error){
         console.log('Erro ao subir servidor!',error);
         process.exit(1);

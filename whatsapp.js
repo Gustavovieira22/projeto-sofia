@@ -87,7 +87,20 @@ client.on('message_create',async(message) =>{
         if(!message.fromMe){
             await saveLocation(chat.lastMessage.location.latitude, chat.lastMessage.location.longitude, phone);
             if(messages.has(phone)){
-                messages.get(phone).push({role: "system", content:`A localização para o endereço do cliente é: https://maps.google.com/?q=${chat.lastMessage.location.latitude},${chat.lastMessage.location.longitude}`});
+                
+                const history = messages.get(phone);
+
+                const frasesParaRemover = [
+                    'A localização do cliente é',
+                    'A localização do cliente não está registrada no sistema'
+                  ];
+                  
+                  const filtered = history.filter(
+                    msg => !frasesParaRemover.some(frase => msg.content.startsWith(frase))
+                  );
+                  
+                messages.set(phone,filtered);
+                messages.get(phone).push({role: "system", content:`A localização para o endereço registrado é: https://maps.google.com/?q=${chat.lastMessage.location.latitude},${chat.lastMessage.location.longitude}`});
             }
             //envia dados do cliente em atendimento para o frontend//
             await broadcasting(controlClient);
@@ -98,6 +111,7 @@ client.on('message_create',async(message) =>{
     if(messageBody.length>250 && !message.fromMe){//Ignora mensagens muito longas, desativa atendimento de chatbot//
         console.log(`Mensagem muito longa, desativando chatbot para: ${phone}`);
         controlClient.set(phone, false);
+        await broadcasting(controlClient);
         return;
     }
 
@@ -126,6 +140,7 @@ client.on('message_create',async(message) =>{
         if(controlClient.has(phone)){//desativa o chatbot para o contato que receber essa mensagem//
             if(messageBody.includes("desativar")){
               controlClient.set(phone,false);
+              await broadcasting(controlClient);//envia dados do cliente em atendimento para o frontend//
               return;
             }else if(!(messageBody.includes("Chatbot IA - Sofia")) && typeChat === 'chat' && messageBody != "" && messages.has(phone)){//captura as mensagens enviadas pelo atendimento humano//
               messages.get(phone).push({role: "assistant", content:`Mensagem enviada pelo atendente humano: ${messageBody}`});
@@ -194,7 +209,7 @@ client.on('message_create',async(message) =>{
 
                     }else if(processMessage.order){//verifica se o pedido foi lançado//
                         await chat.sendStateTyping();//simula o "digitando..."//
-                        await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n✅Pedido enviado com sucesso!\n_Aguarde a confirmação pelo atendente!_`);
+                        await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n✅Pedido enviado com sucesso!\n_Aguarde a confirmação pelo atendente!_⏳`);
                     }
                 }, 2000);
                 return;   
@@ -235,7 +250,7 @@ client.on('message_create',async(message) =>{
 
         }else if(processMessage.order){//verifica se o pedido foi lançado//
             await chat.sendStateTyping();//simula o "digitando..."//
-            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n✅Pedido enviado com sucesso!\n⏳ _Aguarde a confirmação do atendente!_`);
+            await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n✅Pedido enviado com sucesso!\n_Aguarde a confirmação do atendente!_⏳`);
         }
     }else{
         await chat.sendStateTyping();//simula o "digitando..."//
