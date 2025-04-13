@@ -65,7 +65,7 @@ client.on('auth_failure', msg => {
 
 //api está pronto para receber mensagens//
 client.on('ready', () => {
-    console.log('Chatbot Online!');
+    console.log('Chatbot Sofia está Online!');
 });
 
 //Listener para envento "receber mensagem". (ouve todas as mensagens recebidas)
@@ -83,50 +83,68 @@ client.on('message_create',async(message) =>{
         return;
     }
     
-    if(typeChat === 'location'){//salvar a localização do cliente na base de dados
-        if(!message.fromMe){
-            await saveLocation(chat.lastMessage.location.latitude, chat.lastMessage.location.longitude, phone);
-            if(messages.has(phone)){
-                
-                const history = messages.get(phone);
-
-                const frasesParaRemover = [
-                    'A localização do cliente é',
-                    'A localização do cliente não está registrada no sistema'
-                  ];
-                  
-                  const filtered = history.filter(
-                    msg => !frasesParaRemover.some(frase => msg.content.startsWith(frase))
-                  );
-                  
-                messages.set(phone,filtered);
-                messages.get(phone).push({role: "system", content:`A localização para o endereço registrado é: https://maps.google.com/?q=${chat.lastMessage.location.latitude},${chat.lastMessage.location.longitude}`});
-            }
-            //envia dados do cliente em atendimento para o frontend//
-            await broadcasting(controlClient);
-            return;
-        }
-    }
-
-    if(messageBody.length>250 && !message.fromMe){//Ignora mensagens muito longas, desativa atendimento de chatbot//
-        console.log(`Mensagem muito longa, desativando chatbot para: ${phone}`);
-        controlClient.set(phone, false);
-        await broadcasting(controlClient);
-        return;
-    }
-
     //ignora mensagens enviadas antes da inicialização do chatbot//
     if (message_time < botStart_time) {
         console.log("Ignorando mensagens antigas.");
         return;
     }
 
+    if(typeChat === 'location'){//salvar a localização do cliente na base de dados
+        if(!message.fromMe){
+            if(!controlClient.has(phone)){//coloca cliente na lista de atendimento//
+                controlClient.set(phone, true);//salva cliente no cache status de atendimento//
+                if(await saveClient(phone)){
+                    await broadcasting(controlClient);//envia dados do cliente em atendimento para o frontend//
+                }
+            }
+
+            //salva localização do cliente no banco de dados//
+            if(await saveLocation(chat.lastMessage.location.latitude, chat.lastMessage.location.longitude, phone)){
+                await broadcasting(controlClient);//envia dados do cliente em atendimento para o frontend//
+            }
+
+            //verifica se o cliente está em atendimento e retira a localização antiga do histórico//
+            if(messages.has(phone)){
+                const history = messages.get(phone);//captura o histórico do cliente//
+                
+                const frasesParaRemover = [
+                    'A localização do cliente é',
+                    'A localização do cliente não está registrada no sistema'
+                  ];
+
+                const filtered = history.filter(//remove frases que contém a localização antiga//
+                    msg => !frasesParaRemover.some(frase => msg.content.startsWith(frase))
+                );
+                  
+                messages.set(phone,filtered);
+
+                messages.get(phone).push({role: "system", content:`A localização para o endereço registrado é: https://maps.google.com/?q=${chat.lastMessage.location.latitude},${chat.lastMessage.location.longitude}`});
+            }
+            return;
+        }
+    }
+
+    //Interrompe o fluxo caso o cliente não esteja com atendimento setado em true//
+    if(controlClient.has(phone) && !(controlClient.get(phone))){
+        console.log(`chatbot desativado para o cliente: ${phone}`);
+        return;
+    }
+
+    //Ignora mensagens muito longas, desativa atendimento de chatbot//
+    if(messageBody.length>250 && !message.fromMe){
+        console.log(`Mensagem muito longa, desativando chatbot para: ${phone}`);
+        controlClient.set(phone, false);
+        await saveClient(phone);//Verifica se cliente está registrado no banco de dados//
+        await broadcasting(controlClient);
+        return;
+    }
+
     //verifica se é o primeiro contato do cliente//
     if(!controlClient.has(phone)){
-        await saveClient(phone);//Verifica se cliente está registrado no banco de dados//
         controlClient.set(phone, true);//salva cliente no cache status de atendimento//
-        
-        await broadcasting(controlClient);//envia dados do cliente em atendimento para o frontend//
+        if(await saveClient(phone)){
+            await broadcasting(controlClient);//envia dados do cliente em atendimento para o frontend//
+        }
 
         //Primeira mensagem de saudação//
         if(typeChat === 'chat' && !message.fromMe && controlClient.get(phone)){
@@ -137,25 +155,15 @@ client.on('message_create',async(message) =>{
 
     //Salva no histórico mensagens enviadas pelo atendimento humano//
     if(message.fromMe){
-        if(controlClient.has(phone)){//desativa o chatbot para o contato que receber essa mensagem//
-            if(messageBody.includes("desativar")){
-              controlClient.set(phone,false);
-              await broadcasting(controlClient);//envia dados do cliente em atendimento para o frontend//
-              return;
-            }else if(!(messageBody.includes("Chatbot IA - Sofia")) && typeChat === 'chat' && messageBody != "" && messages.has(phone)){//captura as mensagens enviadas pelo atendimento humano//
-              messages.get(phone).push({role: "assistant", content:`Mensagem enviada pelo atendente humano: ${messageBody}`});
-              return;
-            }
-          }
+        //captura as mensagens enviadas pelo atendimento humano//
+        if(!(messageBody.includes("Chatbot IA - Sofia")) && typeChat === 'chat' && messageBody != "" && messages.has(phone)){
+            messages.get(phone).push({role: "assistant", content:`Mensagem enviada pelo atendente humano: ${messageBody}`});
+            
+            return;
+        }
         return;
     }
     
-    //Interrompe o fluxo caso o cliente não esteja com atendimento setado em true//
-    if(!(controlClient.get(phone))){
-        console.log(`chatbot desativado para o cliente: ${phone}`);
-        return;
-    }
-
     //solicitar esclarecimento quando cliente enviar imagem
     if(message.hasMedia && typeChat == 'image'){
         await chat.sendStateTyping(); //simula o "digitando..."//
@@ -198,6 +206,7 @@ client.on('message_create',async(message) =>{
                 
                 //Aguarda 2 segundos antes de enviar mensagem para o cliente//
                 setTimeout(async () => {
+                    //envia a primeira mensagem e posteriormente verifica se é necessário enviar algo mais//
                     await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${processMessage.processMessage}`);                
                     
                     if(processMessage.location){//verifica se a localização foi solicitada//
@@ -219,7 +228,7 @@ client.on('message_create',async(message) =>{
                 //Aguarda 2 segundos antes de enviar mensagem para o cliente//
                 setTimeout(async () => {
                     await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
-                }, 2000);
+                }, 500);
                 return;   
             }
         }
@@ -258,7 +267,7 @@ client.on('message_create',async(message) =>{
         //Aguarda 2 segundos antes de enviar mensagem para o cliente//
         setTimeout(async () => {
             await client.sendMessage(number, `*Chatbot IA - Sofia:*\n\n${response_gpt}`);
-        }, 2000);
+        }, 500);
     }
 });
 

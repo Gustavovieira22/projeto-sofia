@@ -15,10 +15,10 @@ async function searchClient() {
                 if(data){
                     displayClient(data);
                 }else{
-                    tableClient.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nenhum cliente em atendimento!</td></tr>`;
+                    tableClient.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Nenhum cliente em atendimento!</td></tr>`;
                 }
             } catch (error) {
-                tableClient.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Erro inesperado ao exibir clientes!</td></tr>`;
+                tableClient.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Erro inesperado ao exibir clientes!</td></tr>`;
                 console.log("Erro inesperado ao exibir clientes em atendimento",error);  
             }
         }
@@ -42,10 +42,10 @@ async function getClients(event) {
         if(data){
             displayClient(data);
         }else{
-            tableClient.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nenhum cliente econtrado!</td></tr>`;
+            tableClient.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Nenhum cliente econtrado!</td></tr>`;
         }
     } catch (error) {
-        tableClient.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Erro inesperado ao exibir clientes!</td></tr>`;
+        tableClient.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Erro inesperado ao exibir clientes!</td></tr>`;
         console.log("Erro inesperado ao buscar cliente",error);  
     }
 };

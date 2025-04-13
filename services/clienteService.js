@@ -36,7 +36,8 @@ async function saveName(name, phone) {
     try {
       const client = await dbClient.findOneAndUpdate(
         { phone: phone }, 
-        { $set: { name: name } }, 
+        { $set: { name: name } },
+        {$set:{date_contact:new Date()}}, 
         { new: true });
         
       if(client){
@@ -49,6 +50,7 @@ async function saveName(name, phone) {
       }
     } catch (error) {
       console.log("Erro ao salvar nome do cliente.",error);
+      return false;
     }  
 };
 
@@ -57,6 +59,7 @@ async function saveLocation(lat, long, phone) {
   try {
     const client = await dbClient.findOneAndUpdate(
       {phone:phone},
+      {$set:{date_contact:new Date()}},
       {$set:{
         "address.location.lat":lat, 
         "address.location.long":long
@@ -80,6 +83,7 @@ async function saveAddress(address, phone) {
   try {
     const client = await dbClient.findOneAndUpdate(
       {phone:phone},
+      {$set:{date_contact:new Date()}},
       {
         $set:{"address.address_write":address},//Atualiza o endereço//
         $unset: { "address.location.lat": "", "address.location.long": "" }//Remove a localização vinculada//

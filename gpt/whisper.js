@@ -24,9 +24,10 @@ async function whisper(filePath) {
         });
 
         return response.data.text; // Retorna o texto transcrito
+        
     } catch (error) {
         console.error('Erro ao transcrever o áudio:', error.response ? error.response.data : error.message);
-        return 'Erro ao processar sua mensagem!';
+        return '*Erro* ao processar mensagem de áudio.';
     }
 }
 

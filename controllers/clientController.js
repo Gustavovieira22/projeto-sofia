@@ -1,8 +1,6 @@
 const dbClient  = require('../models/Client');//banco de dados com informações dos clientes//
 const {controlClient} = require('../utils/controlClient');//Cache com telefones dos clientes em atendimento//
 
-const broadcasting = require('../websocket/broadcasting');
-
 //Função que retorna dados de clientes em atendimento - primeiro acesso//
 exports.allClients = async (req, res) =>{
     const phoneClients = Array.from(controlClient.keys());//converte cache de telefone de clientes em um array de telefones//
@@ -10,15 +8,16 @@ exports.allClients = async (req, res) =>{
     try {
         const clients = await dbClient.find({
             phone:{$in: phoneClients} 
-         });
+         }).sort({ date_contact: -1 }); //ordena pela data mais recente//
         if(clients){
             res.json(clients);    
         }else{
-            res.json('Banco de dados vazio, não há clientes em atendimento!');
+            console.log('Não há clientes em atendimento.')
+            res.json(false);
         }
     } catch (error) {
-        console.log(error);
-        res.status(500).json({error: "Erro ao buscar clientes em atendimento no banco de dados!"});
+        console.log('Erro ao buscar clientes em atendimento:', error);
+        res.status(500).json(false);
     }
 };
 
@@ -58,10 +57,9 @@ exports.controlClient = async(req, res)=>{
 //Atualiza status de atendimento do cliente pelo chatbot//
 exports.changeService = async(req, res)=>{
     const {phone, service} = req.params;
-
     const boolService = service === 'true';//converte string 'true - false' em booleano//
-    
     controlClient.set(phone,boolService);
+    res.json(boolService);
 };
 
 //Atualiza dados do cliente no banco de dados//

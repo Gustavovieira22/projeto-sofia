@@ -3,7 +3,7 @@ const connectDB = require('./config/database');//arquivo de conexão com o banco
 const client = require('./whatsapp');//modulo de inicialização da api whatsapp//
 
 gptParams();//inicia função que carrega variaveis com parametros para configuração do gpt//
-client.initialize();//carrega api whatsappWeb.js//
+//client.initialize();//carrega api whatsappWeb.js//
 
 //configurando servidor local//
 const express = require('express');
@@ -12,7 +12,7 @@ const cors = require('cors');
 
 const app = express();
 const PORT = 3000;
-const IP = '192.168.1.104';
+const {host} = require('./utils/controlClient');
 
 //Importando rotas para o servidor//
 const clientRouters = require('./routers/clientRouters');
@@ -29,7 +29,7 @@ app.use(cors());
 app.use('/',clientRouters);
 
 //iniciando servidor local//
-app.listen(PORT,IP,(error)=>{
+app.listen(PORT,host,(error)=>{
     if(error){
         console.log('Erro ao subir servidor!',error);
         process.exit(1);

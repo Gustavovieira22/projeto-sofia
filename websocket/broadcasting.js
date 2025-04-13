@@ -1,8 +1,9 @@
 const WebSocket = require('ws');
 const dbClient = require('../models/Client');
-const IP = '192.168.1.104';
+const {host} = require('../utils/controlClient');
+
 //configurando Websocket//
-const wss = new WebSocket.Server({port:8080, host:IP});
+const wss = new WebSocket.Server({port:8080, host:host});
 
 //iniciando conexão com o Websocket//
 wss.on('connection', async (ws)=>{
@@ -19,7 +20,8 @@ async function broadcasting(controlClient){
     try {
         const clients = await dbClient.find({//busca dados de clientes através dos telefones//
            phone:{$in: phoneClients} 
-        });
+        }).sort({ date_contact: -1 }); //ordena pela data mais recente//
+
         wss.clients.forEach((client)=>{//envia dados de clientes para o front//
             if(client.readyState === WebSocket.OPEN){
                 client.send(JSON.stringify(clients));

@@ -1,6 +1,7 @@
 const OpenAI = require("openai");
 const dotenv = require("dotenv");
 dotenv.config();
+//Função que atualiza dados de clientes no frontend//
 const broadcasting = require('../websocket/broadcasting');
 
 //variáveis de controle do cliente//
@@ -142,15 +143,14 @@ async function gpt(message_body, phone) {
 
         } catch (error) {
           console.log(`Erro ao processar chamada de função: ${function_name}`);
-          return `Erro ao enviar pedido para o sistema.`
+          return `*Erro* ao processar função - aguarde alguns segundos e tente novamente.`
         }
       }
     }
-    console.log(messages.get(phone));
     return responseGpt; //retornar a mensagem gerada pelo GPT//      
   } catch (error) {
     console.error("Erro ao acessar a API:", error.response?.data || error.message);
-    return `Erro ao processar resposta!`;
+    return `*Erro* ao processar resposta.`;
   }
 };
 

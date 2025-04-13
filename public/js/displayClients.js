@@ -2,11 +2,16 @@
 
 //Função que faz a conexão com o WebSocket do servidor//
 function conectionWS(){
-    const IP = '192.168.1.104';
+    const IP = 'localhost';
     const socket = new WebSocket(`ws://${IP}:8080`);
     socket.onmessage = async function(event){
         const data = JSON.parse(event.data);
-        await displayClient(data);
+        //chama função que exibi o total de clientes cadastrados//
+        await count_clientsDisplay();
+
+        if(data.length>0){
+            await displayClient(data);
+        }
     };
     socket.onclose = function(){
         console.log('Servidor WebSocket desconectado!');
@@ -22,7 +27,7 @@ async function current_clients() {
         });
         const data = await response.json();
         if(data){
-            await displayClient(data);
+            await displayClient(data)
         }else{
             console.log('Nenhum cliente no banco de dados!');
         }
@@ -35,6 +40,11 @@ async function current_clients() {
 async function displayClient(data){
     const tableClient = document.getElementById('table-body');//tabela que exibe os clientes
     tableClient.innerHTML = '';//limpa previamente a tabela
+    
+    if(data.length<=0){
+        tableClient.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Nenhum cliente em atendimento!</td></tr>`;
+        return;
+    }
 
     for(let i=0;i<data.length;i++){
         const row = tableClient.insertRow();//cria uma linha na tabela
@@ -74,10 +84,32 @@ async function displayClient(data){
         cellName.textContent = data[i].name;
         cellPhone.textContent = data[i].phone;
 
+        const btnAddress = document.createElement('button');
         //pegando endereço do cliente
         if(data[i].address && data[i].address.address_write){
             //caso haja endereço será exibido na linha do cliente
             cellAddress.textContent = data[i].address.address_write;
+            cellAddress.setAttribute('class', 'small-text');
+            btnAddress.setAttribute('class','btn btn-sm btn-outline-danger');
+            btnAddress.innerHTML = '<i class="bi bi-copy"></i>';
+            cellAddress.appendChild(btnAddress);
+
+            //criando botão para copiar endereço//
+            btnAddress.onclick = ()=>{
+                const input = document.createElement('input');
+                input.type ='text';
+                if(data[i].address && data[i].address.location && data[i].address.location.lat && data[i].address.location.long){
+                    input.value = `${data[i].address.address_write} - https://maps.google.com/?q=${data[i].address.location.lat},${data[i].address.location.long}`;
+                }else{
+                    input.value = `${data[i].address.address_write}`
+                }
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                console.log("Endereço copiado com sucesso!");
+            };
+            
         }else{
             //caso não haja endereço, adiciona um botão para inserir endereço
             const btnAddress = document.createElement('button');
@@ -95,7 +127,8 @@ async function displayClient(data){
         const btnDelete = document.createElement('button');
         btnDelete.setAttribute('class','btn btn-outline-danger btn-sm');
         btnDelete.innerHTML = '<i class="bi bi-trash-fill"></i>';
-        btnDelete.onclick = async ()=>{await deleteClient(data[i].phone);
+        btnDelete.onclick = async ()=>{
+            await deleteClient(data[i].phone);
             tableClient.deleteRow(row.rowIndex - 1);
         };
 
@@ -119,7 +152,7 @@ async function deleteClient(phone) {
         method:'DELETE'
     });
     const data = await response.json();
-    console.log(data);
+    alert(data);
   } catch (error) {
     console.log("Erro inesperado ao deletar cliente!",error);
   }  
@@ -155,9 +188,9 @@ async function changeService(event) {
         const url = `/api/service/${phone}/${service}`;
         const response = await fetch(url,{method:'GET'});
         const data = await response.json();
-        console.log(data);
+        console.log(`Estado do cliente alterado para:`,data);
     } catch (error) {
-        console.log("Erro inesperado ao buscar cliente",error);  
+        console.log("Erro inesperado ao alterar estado de atendimento do cliente: ",error);  
     }
 };
 
