@@ -122,6 +122,7 @@ client.on('message_create',async(message) =>{
             }
             return;
         }
+        return;
     }
 
     //Interrompe o fluxo caso o cliente não esteja com atendimento setado em true//
@@ -158,7 +159,7 @@ client.on('message_create',async(message) =>{
         //captura as mensagens enviadas pelo atendimento humano//
         if(!(messageBody.includes("Chatbot IA - Sofia")) && typeChat === 'chat' && messageBody != "" && messages.has(phone)){
             messages.get(phone).push({role: "assistant", content:`Mensagem enviada pelo atendente humano: ${messageBody}`});
-            
+
             return;
         }
         return;

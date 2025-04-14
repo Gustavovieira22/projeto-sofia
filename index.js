@@ -3,7 +3,7 @@ const connectDB = require('./config/database');//arquivo de conexão com o banco
 const client = require('./whatsapp');//modulo de inicialização da api whatsapp//
 
 gptParams();//inicia função que carrega variaveis com parametros para configuração do gpt//
-//client.initialize();//carrega api whatsappWeb.js//
+client.initialize();//carrega api whatsappWeb.js//
 
 //configurando servidor local//
 const express = require('express');

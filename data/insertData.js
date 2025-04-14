@@ -372,6 +372,10 @@ const inserirRegras = async()=>{
                     {
                         name:"Adicional de Catupiry Original",
                         price:4
+                    },
+                    {
+                        name:"Adicional de molho barbecue a parte",
+                        price:2
                     }
                 ]
             },
