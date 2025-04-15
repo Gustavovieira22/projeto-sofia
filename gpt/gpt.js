@@ -39,17 +39,17 @@ async function gpt(message_body, phone) {
 
     messages.get(phone).push({role: "system", content:`Este é o telefone do cliente: ${phone}`});
     
-    if(client.name){
+    if(client?.name){
       messages.get(phone).push({role: "system", content:`O nome do cliente é: ${client.name}`});
     }
 
-    if(client.address?.location?.lat && client.address?.location?.long){
+    if(client?.address?.location?.lat && client.address?.location?.long){
       messages.get(phone).push({role: "system", content:`A localização do cliente é: https://maps.google.com/?q=${client.address.location.lat},${client.address.location.long}`});
     }else{
       messages.get(phone).push({role: "system", content:`A localização do cliente não está registrada no sistema.`});
     }
 
-    if(client.address?.address_write){
+    if(client?.address?.address_write){
       messages.get(phone).push({role: "system", content:`O endereço do cliente é: ${client.address.address_write}`});
 
       messages.get(phone).push({role: "system", content:`Caso o pedido seja para entrega, pergunte ao cliente se o endereço registrado está correto. Se o endereço estiver correto, siga o atendimento normalmente.`});

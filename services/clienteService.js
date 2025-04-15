@@ -59,8 +59,8 @@ async function saveLocation(lat, long, phone) {
   try {
     const client = await dbClient.findOneAndUpdate(
       {phone:phone},
-      {$set:{date_contact:new Date()}},
       {$set:{
+        date_contact:new Date(),
         "address.location.lat":lat, 
         "address.location.long":long
       }},
@@ -85,8 +85,8 @@ async function saveAddress(address, phone) {
       {phone:phone},
       {$set:{date_contact:new Date()}},
       {
-        $set:{"address.address_write":address},//Atualiza o endereço//
-        $unset: { "address.location.lat": "", "address.location.long": "" }//Remove a localização vinculada//
+        $set:{"address.address_write":address}//Atualiza o endereço//
+        //$unset: { "address.location.lat": "", "address.location.long": "" }//Remove a localização vinculada//
       },
       {new:true});
       if(client){
