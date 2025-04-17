@@ -36,8 +36,9 @@ async function saveName(name, phone) {
     try {
       const client = await dbClient.findOneAndUpdate(
         { phone: phone }, 
-        { $set: { name: name } },
-        {$set:{date_contact:new Date()}}, 
+        { $set: { name: name,
+          date_contact:new Date()
+        }},
         { new: true });
         
       if(client){
@@ -83,11 +84,10 @@ async function saveAddress(address, phone) {
   try {
     const client = await dbClient.findOneAndUpdate(
       {phone:phone},
-      {$set:{date_contact:new Date()}},
-      {
-        $set:{"address.address_write":address}//Atualiza o endereço//
-        //$unset: { "address.location.lat": "", "address.location.long": "" }//Remove a localização vinculada//
-      },
+      {$set:{
+        date_contact:new Date(),
+        "address.address_write":address//Atualiza o endereço//
+      }},
       {new:true});
       if(client){
         console.log(`Endereço cadastrado para o cliente: ${client.phone}`);
