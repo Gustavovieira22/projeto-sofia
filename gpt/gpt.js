@@ -27,6 +27,8 @@ const openai = new OpenAI({
 async function gpt(message_body, phone) {
 
   if(!serviceHours()){//Verifica se está no horário de atendimento//
+    controlClient.set(phone, false); //avisa que está fechado e retira do cliente do atendimento//
+    broadcasting(controlClient); //atualiza o front//
     return"🔴 *Estamos Fechados!* 🔴\n\nAtendemos de  *Segunda* a *Sábado* das *18:00* às *22:50*";
   }
 
