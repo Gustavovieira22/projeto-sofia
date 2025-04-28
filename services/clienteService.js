@@ -3,6 +3,9 @@ const dbClient = require('../models/Client');
 const dbMenu = require('../models/Menu');
 const broadcasting = require('../websocket/broadcasting');
 const {controlClient, messages} = require('../utils/controlClient');
+const {registerOrder} = require('./orderService');
+const Order = require('../models/Orders');
+const { name } = require('ejs');
 
 async function saveClient(phone) {
 //Função que salva telefone do cliente no banco de dados//
@@ -118,9 +121,14 @@ async function saveAddress(address, phone) {
 
 //Função que calcula e organiza o pedido do cliente//
 async function calculateOrder(items, dataClient) {
+  const taxa_delivery = 3;//taxa de entrega fixa//
   let totalOrder = 0; //Total do pedido//
   let description = []; //descrição do pedido completo//
-  
+  let itens_order = []; //array de itens: nome, quantidade e preço atual//
+  const now = new Date();//data atual//
+  const dateNow = now; //No formato Date//
+  const hourNow = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });//hora no formato string//
+
   description.push(`*Cliente:* ${dataClient.name}`);
   description.push(`*Telefone:* ${dataClient.phone}\n`);
   description.push(`Pedido para *${dataClient.type_order}* \n`);
@@ -146,8 +154,12 @@ async function calculateOrder(items, dataClient) {
       }else{
         description.push(`*${item.quantity}x ${item.name}*`);
       }
+      
+      //cria array de itens com nome, quantidade e preço individual//
+      itens_order.push({name: item.name, quantity: item.quantity, price: produto.item[0].price});
+
     }else{
-      description.push(`${item.quantity}x ${item.name} - ❌Produto não encontrado❌`);
+      description.push(`${item.quantity}x ${item.name} - ❌Item indisponível no cardápio!❌`);
     }
   }
 
@@ -155,11 +167,36 @@ async function calculateOrder(items, dataClient) {
     description.push(`\n*Observações:* _${dataClient.note_order}_`);
   }
   if(dataClient.type_order === "entrega"){//soma R$3,00 ao pedido caso seja entrega//
-    totalOrder += 3;
+    totalOrder += taxa_delivery;
     description.push(`\nTaxa de entrega *R$3,00*`);
   }
   description.push(`\n\n*Total:* ${totalOrder.toFixed(2)} - *${dataClient.payment}*`);
   description.push("#order");//tag para indicar que o pedido foi finalizado//
+
+  try {
+    //cria objeto contendo todos os dados do pedido//
+    const orderComplet = {
+      phone: dataClient.phone,
+      name: dataClient.name,
+      type:dataClient.type_order,
+      itens:itens_order,
+      description:dataClient.note_order,
+      address_write:dataClient.address || '',
+      location:dataClient.location || '',
+      date: dateNow,
+      hour: hourNow,
+      total: totalOrder.toFixed(2),
+      payment: dataClient.payment,
+      number: 1 //provisório//
+    }
+
+    //envia pedido para ser registrado no banco de dados//
+    await registerOrder(orderComplet);
+
+  } catch (error) {
+    console.log('ERRO ao registrar pedido no banco de dados:',error);
+  }
+
   return description.join('\n');//retorna a descrição completa do pedido//
 };
 

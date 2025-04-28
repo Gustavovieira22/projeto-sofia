@@ -8,7 +8,7 @@ controlClient.set('556294818031',false);//Analuce
 controlClient.set('556281510701',false);//Murilo Entregador
 controlClient.set('556281551998',false);//Guilherme Cozinha
 controlClient.set('556281274929',false);//João Entregador
-controlClient.set('556295305921',false);//Telefone da Loja: Henry Burguer!
+//controlClient.set('556295305921',false);//Telefone da Loja: Henry Burguer!
 controlClient.set('556281198379',false);//Telefone Grupo Vieira
 
 function serviceHours() {
