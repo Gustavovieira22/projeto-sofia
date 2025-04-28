@@ -2,8 +2,7 @@ const {initData} = require('./data/dataLoader');//inicializa variáveis com para
 const connectDB = require('./config/database');//arquivo de conexão com o banco de dados//
 const client = require('./whatsapp');//modulo de inicialização da api whatsapp//
 
-gptParams();//inicia função que carrega variaveis com parametros para configuração do gpt//
-client.initialize();//carrega api whatsappWeb.js//
+initialization();//inicia função que carrega variaveis com parametros para configuração do gpt//
 
 //configurando servidor local//
 const express = require('express');
@@ -12,7 +11,6 @@ const cors = require('cors');
 
 const app = express();
 const PORT = 3000;
-const {host} = require('./utils/controlClient');
 
 //Importando rotas para o servidor//
 const clientRouters = require('./routers/clientRouters');
@@ -29,7 +27,7 @@ app.use(cors());
 app.use('/',clientRouters);
 
 //iniciando servidor local//
-app.listen(PORT,host,(error)=>{
+app.listen(PORT,(error)=>{
     if(error){
         console.log('Erro ao subir servidor!',error);
         process.exit(1);
@@ -38,9 +36,13 @@ app.listen(PORT,host,(error)=>{
 });
 
 //Carrega os parametros do gpt para cache local//
-async function gptParams() {
+async function initialization() {
     // conexão com o banco de dados//
     await connectDB();
+    
     // recupera os dados do banco e guarda em cache local//
     await initData();
+
+    //carrega api whatsappWeb.js//
+    client.initialize();
 };

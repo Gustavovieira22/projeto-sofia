@@ -1,9 +1,8 @@
 const WebSocket = require('ws');
 const dbClient = require('../models/Client');
-const {host} = require('../utils/controlClient');
 
 //configurando Websocket//
-const wss = new WebSocket.Server({port:8080, host:host});
+const wss = new WebSocket.Server({port:8080, host:'localhost'});
 
 //iniciando conexão com o Websocket//
 wss.on('connection', async (ws)=>{

@@ -1,6 +1,5 @@
 const controlClient = new Map(); //controla o status de atendimento dos clientes//
 const messages = new Map(); //variável que controla parametros e histórico de conversas//
-const host = 'localhost';
 
 //contatos com chatbot desativado//
 controlClient.set('556293539111',false);//Gustavo Entregador
@@ -23,4 +22,4 @@ function serviceHours() {
     return (horaAtual>=abrir && horaAtual<=fechar);//verdadeiro quando aberto//
 }
 
-module.exports = {controlClient, messages, serviceHours, host};
+module.exports = {controlClient, messages, serviceHours};
