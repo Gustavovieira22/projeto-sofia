@@ -63,24 +63,23 @@ async function sendClient(event){
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(newClient)
         });
-
         const data = await response.json();
-
         if(!response.ok){
-            if(response.status === 400){
-                alert(data.error);
+            showAlert(data.error, 'danger');
+            setTimeout(() => {
+                localStorage.clear();
+                window.location.href = "/"; 
                 return;
-            }
-            if(response.status === 500){
-                alert(data.error);
-                return;
-            }
+            }, 1000);   
         }
-        //sucesso!//
-        alert(data.message);
 
-        localStorage.clear();
-        window.location.href = "/";
+        //sucesso!//
+        showAlert(data.message, 'success');
+
+        setTimeout(() => {
+            localStorage.clear();
+            window.location.href = "/"; 
+        }, 1000);
 
      } catch (error) {
         alert(`Erro ao editar dados do cliente!`);

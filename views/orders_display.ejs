@@ -1,5 +1,12 @@
 <%- include ('partials/header.ejs') %>
+<!-- Inserindo arquivos de Script -->
 <script src="/js/orders.js" defer></script>
+<script src="/js/notifications.js" defer></script>
+
+<div id="alert-container" class="container mt-3 fixed-top" style="z-index: 1050;">
+    <!-- div onde os alertas serão adicionados -->
+</div>
+
 <div class="container d-flex justify-content-start mt-5">
     <button type="button" class="btn btn-small btn-danger" onclick="(async ()=>{
         //limpa o localStorage//

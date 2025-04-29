@@ -22,17 +22,16 @@ function conectionWS(){
 async function current_clients() {
     try {
         const url = '/api/clientes';
-        const response = await fetch(url,{
-            method:'GET',
-        });
+        const response = await fetch(url,{method:'GET'});
         const data = await response.json();
-        if(data){
-            await displayClient(data)
-        }else{
-            console.log('Nenhum cliente no banco de dados!');
+        if(!response.ok){
+            showAlert(data.error,'danger');
+            return;
         }
+        await displayClient(data.clients);
     } catch (error) {
-        console.log("Erro inesperado ao buscar cliente",error);
+        console.log("Erro inesperado ao buscar lista de clientes.",error);
+        showAlert('Erro inesperado ao buscar lista de clientes.','danger');
     }  
 };
 
@@ -152,18 +151,28 @@ async function displayClient(data){
     }
 };
 
-//Função que deleta dados do cliente via api//
+//Função que DELETA todos os dados do cliente//
 async function deleteClient(phone) {
   try {
     const url = `/clientes/delete/${phone}`;
-    const response = await fetch(url,{
-        method:'DELETE'
-    });
+    const response = await fetch(url,{method:'DELETE'});
     const data = await response.json();
-    await count_clientsDisplay();//atualiza contador de clientes//
-    alert(data);
+
+    //tratamento de erros//
+    if(!response.ok){
+        showAlert(data.error, 'danger');
+        return;
+    }
+
+    //notificação de sucesso//
+    showAlert(data.message, 'success');
+
+    //atualiza contador de clientes//
+    await count_clientsDisplay();
+
   } catch (error) {
     console.log("Erro inesperado ao deletar cliente!",error);
+    showAlert('Erro inesperado ao deletar dados do cliente! - Front', 'danger');
   }  
 };
 
@@ -171,25 +180,32 @@ async function deleteClient(phone) {
 async function getStatus() {
     try {
         const url = '/api/status';
-        const response = await fetch(url,{
-            method:'GET',
-        });
-        const data = await response.json();
-        if(data){
-            const controlClient = new Map(data);//converte array para map()//
-            return controlClient;
-        }else{
-            console.log('Nenhum cliente no banco de dados!');
-            return false;
+        const response = await fetch(url,{method: 'GET'});
+
+        // Tratar 204 antes de tentar .json()
+        if (response.status === 204) {
+            return false; // nenhum cliente em atendimento no momento
         }
+        const data = await response.json();
+        if (!response.ok) {
+            if (response.status === 500) {
+                showAlert(data.error, 'danger');
+                return false; // erro inesperado no servidor//
+            }
+        }
+        const controlClient = new Map(data); // converte array para Map()//
+        return controlClient;//retorna dados com sucesso//
+
     } catch (error) {
-        console.log("Erro inesperado ao buscar cliente",error);
+        showAlert('Erro inesperado ao buscar lista de atendimento de clientes.', 'danger');
+        console.log("Erro inesperado ao buscar lista de atendimento de clientes.", error);
         return false;
-    }  
+    }
 };
 
 //Função que altera estado de atendimento do cliente
 async function changeService(event) {
+    //capturando os eventos//
     const phone = event.target.id;
     const service = event.target.checked;
 
@@ -197,15 +213,22 @@ async function changeService(event) {
         const url = `/api/service/${phone}/${service}`;
         const response = await fetch(url,{method:'GET'});
         const data = await response.json();
-        console.log(`Estado do cliente alterado para:`,data);
+
+        if(!response.ok){
+            showAlert(data.error, 'danger');
+            return;
+        }
+        
+        showAlert(data.message,'success');
+
     } catch (error) {
+        showAlert("Erro inesperado ao alterar estado de atendimento do cliente",'danger');
         console.log("Erro inesperado ao alterar estado de atendimento do cliente: ",error);  
     }
 };
 
 //Função que envia dados do cliente para edição em outra página
 async function callEdit(client){
-
     //construindo objeto com dados do cliente//
     const dataClient = {};
     
@@ -226,10 +249,15 @@ async function count_clientsDisplay() {
     try {
         const response = await fetch('/api/contador-clientes');
         const data = await response.json();
+        if(!response.ok){
+            showAlert(data.error,'danger');
+            return;
+        }
         const spanQuantidade = document.getElementById('count-clients');
         spanQuantidade.textContent = data;
     } catch (error) {
-        console.log("Erro ao buscar a quantidade de clientes", error);
+        showAlert('Erro inesperado ao buscar quantidade de clientes no banco de dados!','danger');
+        console.log("Erro ao buscar a quantidade de clientes: ", error);
     }
 }
 

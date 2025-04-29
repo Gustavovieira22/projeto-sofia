@@ -47,5 +47,5 @@ async function initialization() {
     await initData();
 
     //carrega api whatsappWeb.js//
-    client.initialize();
+    //client.initialize();
 };

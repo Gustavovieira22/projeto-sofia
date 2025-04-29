@@ -1,3 +1,4 @@
+const { error } = require('qrcode-terminal');
 const dbClient  = require('../models/Client');//banco de dados com informações dos clientes//
 const {controlClient} = require('../utils/controlClient');//Cache com telefones dos clientes em atendimento//
 
@@ -6,18 +7,20 @@ exports.allClients = async (req, res) =>{
     const phoneClients = Array.from(controlClient.keys());//converte cache de telefone de clientes em um array de telefones//
     
     try {
-        const clients = await dbClient.find({
-            phone:{$in: phoneClients} 
-         }).sort({ date_contact: -1 }); //ordena pela data mais recente//
-        if(clients){
-            res.json(clients);    
+        //ordena pela data mais recente//
+        const clients = await dbClient.find({phone:{$in: phoneClients}}).sort({ date_contact: -1 });
+        
+        if(clients.length > 0){
+            //existem +1 cliente em atendimento//
+            res.status(200).json({clients});
+
         }else{
-            console.log('Não há clientes em atendimento.')
-            res.json(false);
+            console.log('Nenhum cliente em atendimento.')
+            res.status(200).json({clients: [], message:'Nenhum cliente em atendimento no momento.'});
         }
     } catch (error) {
-        console.log('Erro ao buscar clientes em atendimento:', error);
-        res.status(500).json(false);
+        console.log('Erro inesperado ao buscar clientes em atendimento:', error);
+        res.status(500).json({error:'Erro inesperado ao buscar clientes em atendimento.'});
     }
 };
 
@@ -34,13 +37,16 @@ exports.editClient = (req,res)=>{
 //Função que deleta dados de cliente do banco de dados//
 exports.deleteClient = async (req,res)=>{
     const {phone} = req.params;
-
+    //verifica se o telefone é válido//
+    if(!phone){
+        return res.status(400).json({error: "telefone do cliente é inválido ou não foi informado."});
+    }
     try {
         const result = await dbClient.deleteOne({phone:phone});
          if(result.deletedCount === 1){
-            res.json("cliente deletado com sucesso.");
+            res.status(200).json({message:`Todos os dados do cliente foram apagados!`});
          }else{
-            res.json("não foi possível deletar este cliente.");
+            res.status(404).json({error: `Cliente não encontrado. Nenhum dado foi apagado.`});
          }   
     } catch (error) {
         console.log(error);
@@ -48,18 +54,42 @@ exports.deleteClient = async (req,res)=>{
     }
 };
 
-//envia lista de clientes em atendimento para o lado do cliente//
+//envia lista de clientes em atendimento para o front//
 exports.controlClient = async(req, res)=>{
-    const phoneClients = Array.from(controlClient.entries());
-    res.json(phoneClients);
+    try {
+        const phoneClients = Array.from(controlClient.entries());
+        if(phoneClients.length === 0){
+            //lista de clientes em atendimento está vazia//
+            return res.status(204).send();
+        }
+        //lista de clientes em atendimento é enviada//
+        res.status(200).json(phoneClients);   
+    } catch (error) {
+        console.log('Erro inesperado ao capturar estado de atendimendo dos clientes.', error);
+        res.status(500).json({error:'Erro inesperado ao capturar estado de atendimendo dos clientes.'})
+    }
 };
 
 //Atualiza status de atendimento do cliente pelo chatbot//
 exports.changeService = async(req, res)=>{
     const {phone, service} = req.params;
-    const boolService = service === 'true';//converte string 'true - false' em booleano//
-    controlClient.set(phone,boolService);
-    res.json(boolService);
+    //verifica se o telefone é válido//
+    if(!phone){
+        return res.status(400).json({error: "telefone do cliente é inválido ou não foi informado."});
+    }
+    try {
+        //converte string 'true - false' em booleano real//
+        const boolService = service === 'true';
+
+        //altera atendimento no Map() de clientes//
+        controlClient.set(phone,boolService);
+
+        res.status(200).json({message:'Atendimento via chatbot alterado com sucesso.', service:boolService});
+
+    } catch (error) {
+        console.log('Erro inesperado ao alterar estado de atendimento do cliente.', error);
+        res.status(500).json({error:'Erro inesperado ao alterar estado de atendimento do cliente.'})
+    }
 };
 
 //Atualiza dados do cliente no banco de dados//
@@ -101,8 +131,9 @@ exports.edit_dataClient = async(req, res)=>{
 exports.countClients = async(req, res)=>{
     try {
         const total = await dbClient.countDocuments();
-        res.json(total);
+        res.status(200).json(total);
     } catch (error) {
+        console.log("Erro inesperado ao contar os clientes no banco de dados: ",error);
         res.status(500).json("Erro ao contar os clientes no banco de dados.");
     }
 };
@@ -110,7 +141,9 @@ exports.countClients = async(req, res)=>{
 //Função que retorna busca de clientes no banco de dados//
 exports.searchClient = async (req, res)=>{
     const {searchField} = req.params;//texto do campo de busca//
-
+    if(!searchField){
+        return res.status(400).json({error: "texto do campo de busca inválido ou não informado."});
+    }
     try {
         const resultado = await dbClient.find({
           $or: [
@@ -121,12 +154,12 @@ exports.searchClient = async (req, res)=>{
         });
         
         if(resultado.length > 0){//retorna os dados caso tenha resultado//
-            res.json(resultado);
+            res.status(200).json({resultado});
         }else{//retorna falso caso não haja nenhum cliente na busca//
-            res.json(false);
+            res.status(200).json({resultado:[], message:'nenhum cliente encontrado para essa busca.'});
         }
       } catch (error) {
-        console.error('Erro ao buscar clientes:', error);
-        res.status(500).json(false);//falso caso haja algum erro no banco de dados//
+        console.error('Erro ao realizar busca por informações de cliente:', error);
+        res.status(500).json({error:'Erro inesperado ao realizar essa busca.'});
       }
 };
