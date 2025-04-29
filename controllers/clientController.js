@@ -70,6 +70,10 @@ exports.edit_dataClient = async(req, res)=>{
     loc_lat = loc_lat?.toString().trim() ? loc_lat : null;
     loc_long = loc_long?.toString().trim() ? loc_long : null;
     name = name?.trim() ? name : null;
+
+    if(!phone){
+        return res.status(400).json({error: "telefone do cliente é inválido ou não foi informado."});
+    }
     
     try {
         const newClient = await dbClient.updateOne(
@@ -83,13 +87,13 @@ exports.edit_dataClient = async(req, res)=>{
                 }
             });
             if(newClient.modifiedCount > 0){
-                res.status(200).json('dados do cliente alterados com sucesso!');
+                res.status(200).json({message:'dados do cliente alterados com sucesso!'});
             }else{
-                res.status(200).json('Não houve alteração nos dados do cliente!');
+                res.status(200).json({message:'nenhuma alteração nos dados do cliente! - Server'});
             }
     } catch (error) {
         console.error('Erro interno ao editar dados do cliente: ', error);
-        res.status(500).json('Erro interno ao editar dados do cliente');
+        res.status(500).json({error: 'Erro interno ao tentar editar dados do cliente!'});
     }    
 };
 

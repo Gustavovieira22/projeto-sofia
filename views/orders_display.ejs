@@ -1,0 +1,33 @@
+<%- include ('partials/header.ejs') %>
+<script src="/js/orders.js" defer></script>
+<div class="container d-flex justify-content-start mt-5">
+    <button type="button" class="btn btn-small btn-danger" onclick="(async ()=>{
+        //limpa o localStorage//
+        localStorage.clear();
+        
+        //volta para página principal//
+        location.assign('/');
+    })()">Voltar</button>
+</div>
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title fs-3 text-center">Lista de Pedidos</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                    <th scope="col">Número</th>
+                    <th scope="col">Data/Hora</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Valor</th>
+                    <th scope="col">Opções</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body" ></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<%- include ('partials/footer.ejs') %>

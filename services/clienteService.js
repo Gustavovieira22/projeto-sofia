@@ -122,16 +122,18 @@ async function saveAddress(address, phone) {
 //Função que calcula e organiza o pedido do cliente//
 async function calculateOrder(items, dataClient) {
   const taxa_delivery = 3;//taxa de entrega fixa//
-  let totalOrder = 0; //Total do pedido//
-  let description = []; //descrição do pedido completo//
-  let itens_order = []; //array de itens: nome, quantidade e preço atual//
-  const now = new Date();//data atual//
-  const dateNow = now; //No formato Date//
-  const hourNow = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });//hora no formato string//
+  let totalOrder = 0; //valor total do pedido//
+  let description = []; //pedido completo por escrito//
+  let itens_order = []; //array de itens: nome, quantidade e preço do item//
+  const now = new Date();//capturando data atual//
+  const dateNow = now; //data no formato Date//
+  const hourNow = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });//hora do pedido no formato string para exibição//
+  
+  //Estruturando texto de exibição do pedido//
+  description.push(`*${dataClient.name}*`);
+  description.push(`*Whatsapp:* ${dataClient.phone}\n`);
+  description.push(`- *${dataClient.type_order}* \n`);//Entrega ou Retirada//
 
-  description.push(`*Cliente:* ${dataClient.name}`);
-  description.push(`*Telefone:* ${dataClient.phone}\n`);
-  description.push(`Pedido para *${dataClient.type_order}* \n`);
   if(dataClient.address && dataClient.type_order === "entrega"){
     description.push(`*Endereço:* ${dataClient.address}`);
   }
@@ -141,35 +143,44 @@ async function calculateOrder(items, dataClient) {
 
   description.push(`\n`);
 
-  for (const item of items){//percorre um item por vez//
-    const produto = await dbMenu.findOne({"item.name":item.name},
-      {"item.$":1}
-    );//busca o item no banco de dados//
+  //Percorrendo Itens do pedido//
+  for (const item of items){
+    //buscando o item no banco de dados//
+    const produto = await dbMenu.findOne(
+      {"item.name":item.name},
+      {"item.$":1
+    });
 
-    if(produto){//soma o valor do item ao total e constroí a descrição do pedido//
+    if(produto){//caso encontre o item no banco de dados//
       const subTotal = Number(produto.item[0].price) * Number(item.quantity);
-      totalOrder += subTotal;
+      totalOrder += subTotal;//soma o valor dos itens ao total do pedido//
+
       if(item.name.includes("Adicional")){
-        description.push(`_${item.quantity}x ${item.name}_`)
+        description.push(`_${item.quantity}x ${item.name}_`);//caso item seja um adicional//
       }else{
-        description.push(`*${item.quantity}x ${item.name}*`);
+        description.push(`*${item.quantity}x ${item.name}*`);//caso seja um item normal do cardápio//
       }
       
-      //cria array de itens com nome, quantidade e preço individual//
+      //cria array de itens do pedido para salvar no banco de dados - name, quantity, price//
       itens_order.push({name: item.name, quantity: item.quantity, price: produto.item[0].price});
 
     }else{
-      description.push(`${item.quantity}x ${item.name} - ❌Item indisponível no cardápio!❌`);
+      //caso o item enviado pela IA não esteja registrado no cardápio//
+      description.push(`${item.quantity}x ${item.name} - ❌ *Item não localizado no cardápio!* ❌`);
     }
   }
-
+  
   if(dataClient.note_order){
-    description.push(`\n*Observações:* _${dataClient.note_order}_`);
+    //caso exista observações sobre o pedido//
+    description.push(`\n*Anotações:* _${dataClient.note_order}_`);
   }
-  if(dataClient.type_order === "entrega"){//soma R$3,00 ao pedido caso seja entrega//
+
+  if(dataClient.type_order === "entrega"){
+    //adiciona taxa de entrega ao total//
     totalOrder += taxa_delivery;
     description.push(`\nTaxa de entrega *R$3,00*`);
   }
+
   description.push(`\n\n*Total:* ${totalOrder.toFixed(2)} - *${dataClient.payment}*`);
   description.push("#order");//tag para indicar que o pedido foi finalizado//
 
@@ -190,13 +201,12 @@ async function calculateOrder(items, dataClient) {
       number: 1 //provisório//
     }
 
-    //envia pedido para ser registrado no banco de dados//
+    //função responsável por registrar pedido no banco de dados//
     await registerOrder(orderComplet);
 
   } catch (error) {
     console.log('ERRO ao registrar pedido no banco de dados:',error);
   }
-
   return description.join('\n');//retorna a descrição completa do pedido//
 };
 

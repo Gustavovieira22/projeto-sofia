@@ -25,7 +25,12 @@
                 <input type="text" class="form-control w-25" placeholder="longitude" id="loc_long">
             </div><br>
             <div class="container d-flex justify-content-center">
-                <button type="button" class="btn btn-lg w-15 btn-danger mb-5 me-3" onclick="location.assign('/')">Voltar</button>
+                <button type="button" class="btn btn-lg w-15 btn-danger mb-5 me-3" onclick="(async ()=>{
+                    //limpa o localStorage//
+                    localStorage.clear();
+                    //volta para página principal//
+                    location.assign('/');
+                })()">Voltar</button>
                 <button type="submit" class="btn btn-lg w-25 btn-success mb-5">Alterar</button>
             </div>
            </form> 

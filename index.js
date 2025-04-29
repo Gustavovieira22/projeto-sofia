@@ -2,7 +2,8 @@ const {initData} = require('./data/dataLoader');//inicializa variáveis com para
 const connectDB = require('./config/database');//arquivo de conexão com o banco de dados//
 const client = require('./whatsapp');//modulo de inicialização da api whatsapp//
 
-initialization();//inicia função que carrega variaveis com parametros para configuração do gpt//
+//inicia função que carrega variaveis com parametros para configuração do gpt//
+initialization();
 
 //configurando servidor local//
 const express = require('express');
@@ -14,6 +15,7 @@ const PORT = 3000;
 
 //Importando rotas para o servidor//
 const clientRouters = require('./routers/clientRouters');
+const orderRouters = require('./routers/orderRouters');
 
 //definindo variáveis de ambiente//
 app.use(express.static(path.join(__dirname,'public')));
@@ -25,6 +27,7 @@ app.use(cors());
 
 //definindo Rotas//
 app.use('/',clientRouters);
+app.use('/',orderRouters);
 
 //iniciando servidor local//
 app.listen(PORT,(error)=>{

@@ -57,7 +57,7 @@ async function displayClient(data){
         const cellLocation = row.insertCell(4);
         const cellOptions = row.insertCell(5);
 
-        //criando botão check de atendimento
+        //criando seletor check de atendimento do chatbot//
         const divCheck = document.createElement('div');
         divCheck.setAttribute('class','form-check form-switch');
         const checkService = document.createElement('input');
@@ -107,7 +107,6 @@ async function displayClient(data){
                 input.select();
                 document.execCommand('copy');
                 document.body.removeChild(input);
-                console.log("Endereço copiado com sucesso!");
             };
             
         }else{
@@ -122,6 +121,14 @@ async function displayClient(data){
         if(data[i].address && data[i].address.location && data[i].address.location.lat && data[i].address.location.long){
             cellLocation.innerHTML = `<a href="https://maps.google.com/?q=${data[i].address.location.lat},${data[i].address.location.long}" target="_blank">Mapa</a>`;
         }
+
+        //definindo botão que faz listagem de pedidos//
+        const btnOrder = document.createElement('button');
+        btnOrder.setAttribute('class','btn btn-outline-primary btn-sm')
+        btnOrder.innerHTML = '<i class="bi bi-basket2-fill"></i>';
+        btnOrder.onclick = async ()=>{
+            await callOrders(data[i].phone);
+        };
 
         //definindo botão de delete
         const btnDelete = document.createElement('button');
@@ -140,6 +147,7 @@ async function displayClient(data){
 
         cellOptions.setAttribute('class','btn-group');
         cellOptions.appendChild(btnEdit);
+        cellOptions.appendChild(btnOrder);
         cellOptions.appendChild(btnDelete);
     }
 };
@@ -152,6 +160,7 @@ async function deleteClient(phone) {
         method:'DELETE'
     });
     const data = await response.json();
+    await count_clientsDisplay();//atualiza contador de clientes//
     alert(data);
   } catch (error) {
     console.log("Erro inesperado ao deletar cliente!",error);
@@ -223,6 +232,13 @@ async function count_clientsDisplay() {
         console.log("Erro ao buscar a quantidade de clientes", error);
     }
 }
+
+async function callOrders(phone) {
+    //salva telefone do cliente no localStorage do navegador//
+    localStorage.setItem('phone',JSON.stringify(phone));
+    //redireciona para a página de exibição de pedidos//
+    window.location.href = "cliente/pedidos";
+};
 
 count_clientsDisplay();//chama função que exibi o total de clientes cadastrados//
 current_clients();//chama função para exibir clientes em atendimento//
