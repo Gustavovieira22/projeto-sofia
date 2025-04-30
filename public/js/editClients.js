@@ -70,19 +70,16 @@ async function sendClient(event){
                 localStorage.clear();
                 window.location.href = "/"; 
                 return;
-            }, 1000);   
+            }, 3000);   
         }
 
         //sucesso!//
-        showAlert(data.message, 'success');
-
-        setTimeout(() => {
-            localStorage.clear();
-            window.location.href = "/"; 
-        }, 1000);
+        alert(data.message);
+        localStorage.clear();
+        window.location.href = "/"; 
 
      } catch (error) {
-        alert(`Erro ao editar dados do cliente!`);
+        alert(`Erro interno ao editar dados do cliente!`);
         console.log("Erro inesperado ao editar dados do cliente!",error);
      }
 };

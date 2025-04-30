@@ -13,8 +13,8 @@ async function showAlert(message, type){
     //inserindo o alerta na tela//
     alertContainer.append(alertPlaceholder);
     
-    //removendo o alerta depois de 4 segundos//
+    //removendo o alerta depois de 3 segundos//
     setTimeout(() => {
         alertContainer.removeChild(alertPlaceholder);
-    }, 4000);
+    }, 1000);
 };
