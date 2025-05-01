@@ -58,7 +58,7 @@ async function displayOrder(){
             const btnView = document.createElement('button');
             btnView.setAttribute('class','btn btn-outline-primary btn-sm');
             btnView.innerHTML = '<i class="bi bi-eye-fill"></i>';
-            btnView.onclick = async ()=>{data[i]};
+            btnView.onclick = async ()=>{await call_edit_order(data[i])};
     
             cellOptions.setAttribute('class','btn-group');
             cellOptions.appendChild(btnView);
@@ -69,6 +69,14 @@ async function displayOrder(){
         tableClient.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Erro ao buscar pedidos de clientes.</td></tr>`;
         return;
     }
+};
+
+//redireciona para tela de exibição de pedido//
+async function call_edit_order(order){
+    //salvando dados no localStorage do navegador//
+    localStorage.setItem('order',JSON.stringify(order));
+    //redirecionando para página de edição//
+    window.location.href = "view/pedido";
 };
 
 displayOrder();

@@ -12,7 +12,9 @@ const inserirRegras = async()=>{
             //Informações gerais:
             {role: "system", content: `Sempre que iniciar uma conversa pergunte o nome do cliente antes de mais nada, quando cliente informar o nome chame a função saveName e passe como parametro o nome do cliente e o telefone. Caso você já tenha o nome do cliente em sua base de dados apenas siga o atendimento normal.`},
 
-            {role: "system", content: `Se mesmo depois de você perguntar o cliente não informar o nome, considere o nome padrão {cliente}. Neste caso não é necessário chamar a função saveName, simplesmente siga o atendimento normalmente.`},
+            {role: "system", content: `Se mesmo depois de você perguntar o cliente não informar o nome, considere o nome padrão {cliente}. Neste caso não é necessário chamar a função saveName, simplesmente siga o atendimento normalmente. Você não precisa informar ao cliente que tomou essa decisão, apenas siga o atendimento.`},
+
+            {role: "system", content: `Quando iniciar o atendimento pergunte se o cliente deseja ver o cardápio digital ou se ele já sabe o que vai pedir. Caso ele opte pelo cardápio forneça-o através da tag: #menu`},
 
             {role: "system", content: `seu trabalho é tirar eventuais dúvidas do cliente, reuniar informações para registrar o pedido do cliente no sistema com a chamada de função registerOrder. sempre responda ao cliente de forma educada, clara e direta. se cabível use emojis para tornar a convesar mais agradével para o cliente. responda ao cliente sempre se baseando nas informações e dados reais que estão disponíveis no seu escopo, não crie novas informações ou forneça dados que não estejam claros em seus registros.`},
           
@@ -311,6 +313,10 @@ const inserirRegras = async()=>{
                     {
                         name:"Coca-Cola 1,5L",
                         price:9
+                    },
+                    {
+                        name:"Limoneto H2O 1,5L",
+                        price:8
                     },
                     {
                         name:"Água com Gás 500ml",

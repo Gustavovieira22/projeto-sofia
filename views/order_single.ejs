@@ -1,0 +1,96 @@
+<%- include ('partials/header.ejs') %>
+<script src="/js/notifications.js" defer></script>
+<script src="/js/singleOrder.js" defer></script>
+
+<div class="container d-flex justify-content-start mt-5">
+    <button type="button" class="btn btn-small btn-danger" onclick="(async ()=>{
+        //limpa o localStorage//
+        localStorage.clear();
+        
+        //volta para página principal//
+        window.history.go(-1);
+    })()">Voltar</button>
+</div>
+
+<div class="container mt-3">
+    <div class="card">
+        <div class="card-header">
+            <h5 id="title-order" class="card-title fs-3 text-center">{número do pedido}</h5>
+            <h6 id="date-hour" class="card-title fs-5 text-center">{data e hora do pedido}</h6>
+        </div>
+        <div class="card-body">
+            <form id="form-order">
+
+                <div class="row justify-content-center">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" placeholder="Nome" id="name" maxlength="99">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" placeholder="Telefone" id="phone" maxlength="15">
+                    </div>
+                </div><br>
+
+                <div class="row justify-content-center">
+                    <div class="col-md-3">
+                        <select class="form-select" id="type">
+                            <option selected disabled>Tipo de Pedido</option>
+                            <option value="entrega">Entrega</option>
+                            <option value="retirada">Retirada</option>
+                          </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" placeholder="CPF" id="cpf" maxlength="14">
+                    </div>
+                </div><br>
+
+                <div class="container d-flex justify-content-center">
+                    <textarea class="form-control w-50" rows="2" placeholder="Endereço" id="address"></textarea>
+                </div><br>
+
+                <div class="container d-flex justify-content-center">
+                    <textarea class="form-control w-50" rows="1" placeholder="Localização" id="location"></textarea>
+                </div><br>
+
+                <div class="container d-flex justify-content-center">
+                    <table class="table table-bordered table-sm w-50 text-center align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Qtd</th>
+                                <th>Item</th>
+                                <th>Preço</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-items">
+                            <!-- Itens do pedido serão inseridos aqui -->
+                        </tbody>
+                    </table>
+                </div>
+
+
+                <div class="container d-flex justify-content-center">
+                    <textarea class="form-control w-50" rows="2" placeholder="Anotações" id="description"></textarea>
+                </div><br>
+
+                <div class="row justify-content-center">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" placeholder="Total" id="total" maxlength="10">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="payment">
+                            <option selected disabled>Forma de pagamento</option>
+                            <option value="cartão">Cartão</option>
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="pix">Pix</option>
+                          </select>
+                    </div>
+                </div><br>
+                <div class="container d-flex justify-content-center">
+                    <button type="submit" class="btn btn-lg w-50 btn-success mb-2">Alterar</button>
+                </div><br>
+                
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include ('partials/footer.ejs') %>

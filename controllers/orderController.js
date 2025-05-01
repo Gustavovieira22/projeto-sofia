@@ -31,3 +31,8 @@ exports.allOrder = async (req, res) =>{
 exports.displayOrder = async (req, res) =>{
     res.render('orders_display.ejs');
 };
+
+//Função que exibe pedido individual do cliente//
+exports.singleOrder = async(req, res)=>{
+    res.render('order_single.ejs');
+};

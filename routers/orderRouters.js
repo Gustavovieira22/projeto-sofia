@@ -12,5 +12,6 @@ const router = express.Router();
 //Rotas GET//
 router.get('/api/pedidos/:phone',orderController.allOrder);
 router.get('/cliente/pedidos',orderController.displayOrder);
+router.get('/cliente/view/pedido',orderController.singleOrder);
 
 module.exports = router;

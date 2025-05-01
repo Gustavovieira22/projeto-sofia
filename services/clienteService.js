@@ -130,18 +130,19 @@ async function calculateOrder(items, dataClient) {
   const hourNow = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });//hora do pedido no formato string para exibição//
   
   //Estruturando texto de exibição do pedido//
-  description.push(`*${dataClient.name}*`);
-  description.push(`*Whatsapp:* ${dataClient.phone}\n`);
-  description.push(`- *${dataClient.type_order}* \n`);//Entrega ou Retirada//
-
+  description.push(`*${dataClient.name}*`);//Nome
+  description.push(`${dataClient.phone}\n`);//Telefone
+  description.push(`*${dataClient.type_order.charAt(0).toUpperCase() + dataClient.type_order.slice(1).toLowerCase()}* \n`);//Entrega ou Retirada//
+  
   if(dataClient.address && dataClient.type_order === "entrega"){
     description.push(`*Endereço:* ${dataClient.address}`);
+    
+    if(dataClient.location && dataClient.type_order === "entrega"){
+      description.push(`*Loc:* ${dataClient.location}\n`);
+    }else{
+      description.push('\n');
+    }
   }
-  if(dataClient.location && dataClient.type_order === "entrega"){
-    description.push(`*Loc:* ${dataClient.location}`);
-  }
-
-  description.push(`\n`);
 
   //Percorrendo Itens do pedido//
   for (const item of items){
@@ -167,12 +168,15 @@ async function calculateOrder(items, dataClient) {
     }else{
       //caso o item enviado pela IA não esteja registrado no cardápio//
       description.push(`${item.quantity}x ${item.name} - ❌ *Item não localizado no cardápio!* ❌`);
+
+      //cria array de itens do pedido para salvar no banco de dados - name, quantity, price//
+      itens_order.push({name: `${item.name} - indisponível`, quantity: item.quantity, price: 0});
     }
   }
   
   if(dataClient.note_order){
     //caso exista observações sobre o pedido//
-    description.push(`\n*Anotações:* _${dataClient.note_order}_`);
+    description.push(`\n*Observações:* _${dataClient.note_order}_`);
   }
 
   if(dataClient.type_order === "entrega"){
