@@ -53,7 +53,7 @@ const tools = [{
     "type": "function",
     "function": {
       "name": "registerOrder",
-      "description": "registra os dados do cliente no sistema de pedidos",
+      "description": "envia informações sobre os itens do pedido, e sobre o cliente para que o pedido seja registrado no sistema.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -67,11 +67,11 @@ const tools = [{
           },
           "address_write": {
             "type": "string",
-            "description": "endereço do cliente"
+            "description": "endereço do cliente se disponível"
           },
           "location": {
             "type": "string",
-            "description": "localização do cliente"
+            "description": "localização do cliente se disponível"
           },
           "type_order": {
             "type": "string",
@@ -80,7 +80,7 @@ const tools = [{
           },
           "note_order": {
             "type": "string",
-            "description": "todas as observações sobre o pedido"
+            "description": "observações sobre os itens do pedido, sobre a forma de pagamento, explicações sobre adicionais em determinado item, refrigerantes que compõe o combo e etc..."
           },
           "payment": {
             "type": "string",
@@ -133,8 +133,33 @@ const tools = [{
         "additionalProperties": false
       }
     }
-  }
-     
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "locais_entrega",
+      "description": "retorna uma lista com o nome da maioria dos bairros em que o Henry Burguer faz entregas.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "menu_description",
+      "description": "retorna todos os itens que compõe o cardápio, incluindo: categoria, nome, descrição e preço de cada item",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  }    
 ];
 
 module.exports = tools;

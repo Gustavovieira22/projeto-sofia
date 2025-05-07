@@ -35,7 +35,7 @@ async function tagProcess(message,phone) {
         }
         
         if(message.includes('#saveName') || message.includes('#saveAddress')){//quando a função saveName é chamada pelo gpt//
-            let processMessage = await gpt("Continuar atendimento.",phone);//envia mensagem para o gpt continuar com o atendimento//
+            let processMessage = await gpt("#executed",phone);//envia mensagem para o gpt continuar com o atendimento//
             
             //caso a resposta do gpt seja o retorno do pedido finalizado//
             if(processMessage.includes("#order")){
